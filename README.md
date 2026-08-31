@@ -1,4 +1,4 @@
-# VoxShield AI — Real-Time Spam/Scam Call Detection
+# VoxShield AI — Real-Time Spam/Scam Call Detection 
  
 Final year project (B.Tech CSE - Cybersecurity) that listens to an ongoing call in real time and tells you how likely it is to be a scam, while it's still happening — not after you've already lost money.
  
