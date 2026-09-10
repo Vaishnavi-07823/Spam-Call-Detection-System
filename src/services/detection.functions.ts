@@ -33,13 +33,15 @@ export const detectScam = createServerFn({ method: "POST" })
     // Step 1: Rule-based analysis (fast, deterministic)
     const ruleResult = analyzeWithRules(transcript);
 
-    // Step 2: AI-powered analysis (deeper understanding)
+    // Step 2: AI-powered analysis with fallback note
     let aiResult;
+    let aiUnavailable = false;
+
     try {
       aiResult = await analyzeWithAI(transcript);
     } catch (err) {
-      console.error("AI analysis failed, using rules only:", err);
-      // Fallback to rule-based only if AI fails
+      console.warn("AI analysis timed out or failed, falling back to rules:", err);
+      aiUnavailable = true;
       aiResult = {
         riskScore: ruleResult.ruleScore,
         category: ruleResult.primaryCategory,
@@ -51,23 +53,25 @@ export const detectScam = createServerFn({ method: "POST" })
       };
     }
 
-    // Step 3: Combine scores — take the maximum for safety
+    // Step 3: Combine scores — take maximum for safety
     const finalScore = Math.max(ruleResult.ruleScore, aiResult.riskScore);
 
-    // Determine final category based on highest scorer
     const finalCategory =
       ruleResult.ruleScore >= aiResult.riskScore
         ? ruleResult.primaryCategory
         : aiResult.category;
 
-    // Build comprehensive reason combining both analyses
-    const combinedReason =
-      ruleResult.matchedKeywords.length > 0 && aiResult.reason
+    const baseReason =
+      ruleResult.matchedKeywords.length > 0 && aiResult.reason && !aiUnavailable
         ? `${aiResult.reason} Additionally, keyword analysis found: ${ruleResult.matchedKeywords
             .slice(0, 3)
             .map((m) => `"${m.keyword}"`)
             .join(", ")}.`
         : aiResult.reason || ruleResult.reason;
+
+    const combinedReason = aiUnavailable
+      ? `[Note: AI analysis unavailable, showing rule-based result] ${baseReason}`
+      : baseReason;
 
     const suggestion =
       aiResult.suggestion ||

@@ -1,7 +1,4 @@
-/**
- * Alert Screen — Displayed when a high-risk scam call is detected.
- * Shows risk score, explanation, and recommended actions.
- */
+import { useEffect, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { AlertTriangle, PhoneOff, ArrowLeft } from "lucide-react";
@@ -32,6 +29,46 @@ export const Route = createFileRoute("/alert")({
 
 function AlertPage() {
   const { score, explanation, suggestion } = Route.useSearch();
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    if (score <= 70) return;
+
+    let isPlaying = true;
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AudioCtx();
+    audioCtxRef.current = ctx;
+
+    const playTone = () => {
+      if (!isPlaying || ctx.state === "closed") return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(450, ctx.currentTime + 0.35);
+
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+
+      setTimeout(playTone, 600);
+    };
+
+    playTone();
+
+    return () => {
+      isPlaying = false;
+      if (ctx.state !== "closed") {
+        ctx.close().catch(() => {});
+      }
+    };
+  }, [score]);
 
   return (
     <div className="flex min-h-screen flex-col items-center px-6 pb-24 pt-8">
@@ -39,14 +76,14 @@ function AlertPage() {
       <motion.div
         className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-danger/15"
         animate={{
-          scale: [1, 1.1, 1],
+          scale: [1, 1.15, 1],
           boxShadow: [
-            "0 0 0 0 oklch(0.58 0.22 25 / 0.3)",
-            "0 0 0 20px oklch(0.58 0.22 25 / 0)",
+            "0 0 0 0 oklch(0.58 0.22 25 / 0.4)",
+            "0 0 0 24px oklch(0.58 0.22 25 / 0)",
             "0 0 0 0 oklch(0.58 0.22 25 / 0)",
           ],
         }}
-        transition={{ duration: 1.5, repeat: Infinity }}
+        transition={{ duration: 1.2, repeat: Infinity }}
       >
         <AlertTriangle className="h-10 w-10 text-danger" />
       </motion.div>
@@ -69,14 +106,26 @@ function AlertPage() {
 
       {/* Details */}
       <div className="w-full max-w-sm space-y-4">
-        <Card className="border-danger/20 bg-danger/5">
-          <CardContent className="p-4">
-            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-danger">
-              Analysis
-            </h3>
-            <p className="text-sm leading-relaxed">{explanation}</p>
-          </CardContent>
-        </Card>
+        <motion.div
+          animate={{
+            boxShadow: [
+              "0 0 0 1px oklch(0.58 0.22 25 / 0.4)",
+              "0 0 16px 2px oklch(0.58 0.22 25 / 0.35)",
+              "0 0 0 1px oklch(0.58 0.22 25 / 0.4)",
+            ],
+          }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+          className="rounded-xl overflow-hidden"
+        >
+          <Card className="border-danger/40 bg-danger/10 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-danger">
+                Analysis
+              </h3>
+              <p className="text-sm leading-relaxed">{explanation}</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         <Card className="border-border/50 bg-card/50">
           <CardContent className="flex items-start gap-3 p-4">

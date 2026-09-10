@@ -44,7 +44,7 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = "en-US";
+    recognition.lang = "en-IN";
 
     return recognition;
   }, []);
@@ -58,15 +58,15 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     recognitionRef.current = recognition;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      let currentText = "";
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscript += result[0].transcript + " ";
+        if (result[0]?.transcript) {
+          currentText += result[0].transcript + " ";
         }
       }
-      if (finalTranscript) {
-        setTranscript((prev) => prev + finalTranscript);
+      if (currentText.trim()) {
+        setTranscript(currentText.trim());
       }
     };
 
@@ -82,7 +82,7 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
         try {
           recognitionRef.current.start();
         } catch {
-          // Already started
+          // Already running
         }
       }
     };

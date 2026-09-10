@@ -6,16 +6,21 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  let key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  if (!key) {
+    key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    console.warn("SUPABASE_SERVICE_ROLE_KEY missing; falling back to SUPABASE_PUBLISHABLE_KEY.");
+  }
+
+  if (!SUPABASE_URL || !key) {
     throw new Error(
-      'Missing Supabase server environment variables. Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.'
+      "Missing Supabase server environment variables. Ensure SUPABASE_URL and a valid key are set."
     );
   }
 
-  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  return createClient<Database>(SUPABASE_URL, key, {
     auth: {
       storage: undefined,
       persistSession: false,
