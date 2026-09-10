@@ -15,7 +15,7 @@ interface AlertSearch {
 export const Route = createFileRoute("/alert")({
   head: () => ({
     meta: [
-      { title: "⚠️ Scam Alert — VoxShield AI" },
+      { title: "⚠️ Scam Alert — TrueShield AI" },
       { name: "description", content: "A potential scam call has been detected." },
     ],
   }),
@@ -92,7 +92,7 @@ function AlertPage() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>VoxShield AI - Cyber Incident Forensic Report (${incidentId})</title>
+        <title>TrueShield AI - Cyber Incident Forensic Report (${incidentId})</title>
         <style>
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; }
           .header { border-bottom: 2px solid #dc2626; padding-bottom: 16px; margin-bottom: 24px; }
@@ -109,7 +109,7 @@ function AlertPage() {
       </head>
       <body>
         <div class="header">
-          <h2>🛡️ VoxShield AI — Cyber Incident Forensic Report</h2>
+          <h2>🛡️ TrueShield AI — Cyber Incident Forensic Report</h2>
           <div class="badge">THREAT CLASSIFICATION: HIGH RISK FRAUD (${score}/100)</div>
         </div>
 
@@ -144,11 +144,11 @@ function AlertPage() {
 
         <div class="section">
           <h3>3. Official Reporting Instructions</h3>
-          <p>This automated forensic brief is certified by VoxShield Dual-Engine Telephony Protection. Present this report when registering a grievance on <strong>cybercrime.gov.in</strong> or calling the <strong>1930</strong> financial fraud hotline.</p>
+          <p>This automated forensic brief is certified by TrueShield Dual-Engine Telephony Protection. Present this report when registering a grievance on <strong>cybercrime.gov.in</strong> or calling the <strong>1930</strong> financial fraud hotline.</p>
         </div>
 
         <div class="footer">
-          Generated automatically by VoxShield AI Telephony Security Framework &copy; ${new Date().getFullYear()}
+          Generated automatically by TrueShield AI Telephony Security Framework &copy; ${new Date().getFullYear()}
         </div>
         <script>
           window.print();
@@ -161,7 +161,7 @@ function AlertPage() {
 
   /** Copy complaint text to clipboard */
   const handleCopyDraft = () => {
-    const draft = `[Cyber Crime Complaint Draft]\nIncident Date: ${new Date().toLocaleString()}\nThreat: High Risk Phone Scam (${score}% Threat Score)\nAnalysis: ${explanation}\nAction Taken: Call terminated. Reference filed via VoxShield AI.\nPlease investigate this fraudulent caller under the National Cyber Crime Reporting Portal (1930).`;
+    const draft = `[Cyber Crime Complaint Draft]\nIncident Date: ${new Date().toLocaleString()}\nThreat: High Risk Phone Scam (${score}% Threat Score)\nAnalysis: ${explanation}\nAction Taken: Call terminated. Reference filed via TrueShield AI.\nPlease investigate this fraudulent caller under the National Cyber Crime Reporting Portal (1930).`;
     navigator.clipboard.writeText(draft);
     alert("Official Complaint draft copied to clipboard!");
   };

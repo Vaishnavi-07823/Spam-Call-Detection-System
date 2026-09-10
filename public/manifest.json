@@ -1,6 +1,6 @@
 {
-  "name": "VoxShield AI",
-  "short_name": "VoxShield",
+  "name": "TrueShield AI",
+  "short_name": "TrueShield",
   "description": "Real-time scam call detection powered by AI",
   "start_url": "/",
   "display": "standalone",

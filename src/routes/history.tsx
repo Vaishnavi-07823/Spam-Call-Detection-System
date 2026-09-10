@@ -62,7 +62,7 @@ const mockHistoryData = [
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "Forensic Incident Ledger — VoxShield AI" },
+      { title: "Forensic Incident Ledger — TrueShield AI" },
       { name: "description", content: "View past scam call detection and telemetry logs." },
     ],
   }),

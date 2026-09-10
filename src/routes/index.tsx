@@ -22,7 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "VoxShield AI — Real-Time Scam Call Detection & Telephony Defense" },
+      { title: "TrueShield AI — Real-Time Scam Call Detection & Telephony Defense" },
       {
         name: "description",
         content:
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: HomePage,
+  component: IndexPage,
 });
 
 const stats = [
@@ -71,22 +71,23 @@ const threatTypes = [
   },
 ];
 
-function HomePage() {
+
+function IndexPage() {
   return (
-    <div className="flex flex-col items-center px-4 sm:px-6 pt-6 sm:pt-10 pb-16">
-      {/* Top Cyber Status Pill */}
+    <div className="flex flex-col items-center px-4 sm:px-6 pb-24 pt-8 max-w-5xl mx-auto w-full">
+      {/* Hero Badge */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-semibold tracking-wide mb-6 shadow-[0_0_20px_rgba(59,130,246,0.15)]"
+        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-semibold mb-6 shadow-sm"
       >
-        <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
-        <span>NEURAL VOICE THREAT DEFENSE • ONLINE</span>
+        <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+        <span>Next-Gen Audio Interception & Fraud Prevention</span>
       </motion.div>
 
-      {/* Hero Headline */}
+      {/* Hero Header */}
       <motion.div
-        className="flex flex-col items-center text-center max-w-2xl"
+        className="text-center max-w-2xl mx-auto"
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -98,7 +99,7 @@ function HomePage() {
           </span>
         </h1>
         <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
-          VoxShield AI listens to in-call conversations in real time, combines{" "}
+          TrueShield AI listens to in-call conversations in real time, combines{" "}
           <span className="text-foreground font-semibold">fast rule-based NLP</span> with{" "}
           <span className="text-foreground font-semibold">Google Gemini 1.5 Flash</span>, and alerts you
           with audio sirens before psychological extortion succeeds.

@@ -19,8 +19,8 @@ import { AuthSection } from "@/components/AuthSection";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — VoxShield AI" },
-      { name: "description", content: "Configure your VoxShield AI preferences." },
+      { title: "Settings — TrueShield AI" },
+      { name: "description", content: "Configure your TrueShield AI preferences." },
     ],
   }),
   component: SettingsPage,
@@ -189,14 +189,14 @@ function SettingsPage() {
                     <Info className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold">VoxShield AI</h3>
+                    <h3 className="text-sm font-semibold">TrueShield AI</h3>
                     <p className="text-xs text-muted-foreground">
                       Version 1.0.0
                     </p>
                   </div>
                 </div>
                 <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                  VoxShield AI uses advanced artificial intelligence to detect
+                  TrueShield AI uses advanced artificial intelligence to detect
                   scam calls in real time, protecting you from fraud and social
                   engineering attacks.
                 </p>

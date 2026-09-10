@@ -16,7 +16,7 @@ interface SafeSearch {
 export const Route = createFileRoute("/safe")({
   head: () => ({
     meta: [
-      { title: "✓ Call Safe — VoxShield AI" },
+      { title: "✓ Call Safe — TrueShield AI" },
       { name: "description", content: "This call has been verified as safe." },
     ],
   }),

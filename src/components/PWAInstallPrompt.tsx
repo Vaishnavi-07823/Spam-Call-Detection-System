@@ -106,7 +106,7 @@ export function PWAInstallPrompt() {
                 </div>
                 <div className="flex-1 pr-6">
                   <h3 className="text-base font-semibold">
-                    Install VoxShield AI
+                    Install TrueShield AI
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {isIOS

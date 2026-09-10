@@ -1,0 +1,217 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1150" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .header-box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; rx: 8; }
+      .title-main { font-family: 'Segoe UI', Arial, sans-serif; font-size: 19px; font-weight: 800; fill: #0f172a; }
+      .title-sub { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #64748b; }
+      
+      /* Flowchart Elements */
+      .fc-start { fill: #dbeafe; stroke: #2563eb; stroke-width: 2; rx: 25; }
+      .fc-process { fill: #ffffff; stroke: #0284c7; stroke-width: 1.5; rx: 6; }
+      .fc-decision { fill: #fef3c7; stroke: #d97706; stroke-width: 1.8; }
+      .fc-rule { fill: #f0fdf4; stroke: #16a34a; stroke-width: 1.5; rx: 6; }
+      .fc-ai { fill: #faf5ff; stroke: #9333ea; stroke-width: 1.5; rx: 6; }
+      .fc-alert-safe { fill: #dcfce7; stroke: #15803d; stroke-width: 1.5; rx: 6; }
+      .fc-alert-warn { fill: #fef9c3; stroke: #ca8a04; stroke-width: 1.5; rx: 6; }
+      .fc-alert-crit { fill: #fee2e2; stroke: #dc2626; stroke-width: 1.8; rx: 6; }
+      
+      .fc-text-title { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 700; text-anchor: middle; }
+      .fc-text-desc { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10.5px; fill: #64748b; text-anchor: middle; }
+      .fc-branch-label { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: 700; fill: #2563eb; }
+      
+      .arrow { stroke: #475569; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .arrow-dash { stroke: #dc2626; stroke-width: 1.8; fill: none; stroke-dasharray: 4 3; }
+      .arrow-back { stroke: #0284c7; stroke-width: 1.8; fill: none; stroke-dasharray: 5 4; }
+    </style>
+
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#475569" />
+    </marker>
+    <marker id="arr-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0284c7" />
+    </marker>
+    <marker id="arr-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#dc2626" />
+    </marker>
+    <filter id="card-shadow" x="-2%" y="-2%" width="104%" height="106%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="1150" class="bg" />
+
+  <!-- Header Block -->
+  <rect x="50" y="20" width="900" height="52" class="header-box" filter="url(#card-shadow)" />
+  <text x="70" y="43" class="title-main">Figure 2: Real-Time Detection Workflow &amp; Decision State Machine</text>
+  <text x="70" y="60" class="title-sub">Step-by-Step Processing Cycle from Continuous Acoustic Stream to Live Mitigation HUD &amp; Forensics</text>
+
+  <!-- Node 1: Start -->
+  <g transform="translate(500, 100)">
+    <rect x="-140" y="-18" width="280" height="36" class="fc-start" />
+    <text y="5" class="fc-text-title" fill="#1e40af">Call Initiated / Monitor Started</text>
+  </g>
+
+  <!-- Flow 1 -> 2 -->
+  <path d="M 500 118 L 500 148" class="arrow" marker-end="url(#arr)" />
+
+  <!-- Node 2: Web Speech Audio Stream -->
+  <g transform="translate(500, 175)">
+    <rect x="-170" y="-27" width="340" height="54" class="fc-process" />
+    <text y="-6" class="fc-text-title" fill="#0369a1">Acoustic Ingestion &amp; Speech ASR</text>
+    <text y="12" class="fc-text-desc">Capture mic stream; Web Speech API processes en-IN / hi-IN</text>
+  </g>
+
+  <!-- Flow 2 -> 3 -->
+  <path d="M 500 202 L 500 232" class="arrow" marker-end="url(#arr)" />
+
+  <!-- Node 3: Sliding Window Buffer -->
+  <g transform="translate(500, 260)">
+    <rect x="-170" y="-27" width="340" height="54" class="fc-process" />
+    <text y="-6" class="fc-text-title" fill="#0369a1">Sliding Temporal Window Buffer</text>
+    <text y="12" class="fc-text-desc">Segment interim &amp; final tokens (Len ≥ 3 chars threshold)</text>
+  </g>
+
+  <!-- Flow 3 -> Fork to Parallel Engines -->
+  <path d="M 500 287 L 500 315" class="arrow" />
+  <path d="M 500 315 L 260 315 L 260 340" class="arrow" marker-end="url(#arr)" />
+  <path d="M 500 315 L 740 315 L 740 340" class="arrow" marker-end="url(#arr)" />
+  <text x="360" y="310" class="fc-branch-label">Parallel Fork</text>
+
+  <!-- Node 4A: Rule-based Engine -->
+  <g transform="translate(260, 385)">
+    <rect x="-180" y="-45" width="360" height="90" class="fc-rule" />
+    <text y="-22" class="fc-text-title" fill="#15803d">Engine A: Rule-Based Lexical Matcher</text>
+    <text y="-4" class="fc-text-desc">Match weighted tokens: OTP, CVV, AnyDesk, Arrest, etc.</text>
+    <text y="12" class="fc-text-desc">Compute S_rule = min(100, Σ weights); Classify Category</text>
+    <text y="28" font-family="Segoe UI, Arial" font-size="10" font-weight="700" fill="#166534" text-anchor="middle">Execution Latency: &lt; 5 ms</text>
+  </g>
+
+  <!-- Node 4B: Gemini LLM Engine -->
+  <g transform="translate(740, 385)">
+    <rect x="-180" y="-45" width="360" height="90" class="fc-ai" />
+    <text y="-22" class="fc-text-title" fill="#7e22ce">Engine B: Gemini Semantic Reasoning</text>
+    <text y="-4" class="fc-text-desc">Prompt: Contextual social engineering &amp; urgency intent</text>
+    <text y="12" class="fc-text-desc">Extract: ⟨ riskScore, category, reason, suggestion ⟩</text>
+    <text y="28" font-family="Segoe UI, Arial" font-size="10" font-weight="700" fill="#6b21a8" text-anchor="middle">Timeout Bound: 6000 ms</text>
+  </g>
+
+  <!-- Flow 4B -> Decision Diamond (Timeout Check) -->
+  <path d="M 740 430 L 740 460" class="arrow" marker-end="url(#arr)" />
+
+  <!-- Decision: AI Response within 6s? -->
+  <g transform="translate(740, 500)">
+    <polygon points="0 -35, 110 0, 0 35, -110 0" class="fc-decision" />
+    <text y="-3" class="fc-text-title" font-size="11.5" fill="#92400e">AI Response OK</text>
+    <text y="12" class="fc-text-desc" font-size="10">within 6000ms?</text>
+  </g>
+
+  <!-- Yes branch from Decision -->
+  <path d="M 740 535 L 740 575 L 560 575" class="arrow" marker-end="url(#arr)" />
+  <text x="748" y="555" class="fc-branch-label" fill="#16a34a">Yes (Normal)</text>
+
+  <!-- No branch (Fallback) from Decision -->
+  <path d="M 850 500 L 920 500 L 920 600 L 560 600" class="arrow-dash" marker-end="url(#arr-red)" />
+  <text x="855" y="493" class="fc-branch-label" fill="#dc2626">No (Fallback)</text>
+  <text x="860" y="540" font-family="Segoe UI, Arial" font-size="9.5" fill="#b91c1c">S_AI = S_rule</text>
+
+  <!-- Flow 4A -> Join into Decision Core -->
+  <path d="M 260 430 L 260 585 L 440 585" class="arrow" marker-end="url(#arr)" />
+
+  <!-- Node 5: Arbitration Core -->
+  <g transform="translate(500, 615)">
+    <rect x="-190" y="-30" width="380" height="60" class="fc-process" stroke="#ea580c" fill="#fff7ed" />
+    <text y="-8" class="fc-text-title" fill="#c2410c">Threat Fusion &amp; Arbitration Core</text>
+    <text y="9" class="fc-text-desc">S_final = max(S_rule, S_AI)</text>
+    <text y="22" class="fc-text-desc">Category = (S_rule ≥ S_AI) ? Cat_rule : Cat_AI</text>
+  </g>
+
+  <!-- Flow 5 -> DB Persist & Branching -->
+  <path d="M 500 645 L 500 680" class="arrow" marker-end="url(#arr)" />
+
+  <!-- Node 6: Asynchronous Cloud Persistence -->
+  <g transform="translate(500, 705)">
+    <rect x="-160" y="-20" width="320" height="40" class="fc-process" stroke="#059669" fill="#ecfdf5" />
+    <text y="-2" class="fc-text-title" font-size="12" fill="#047857">Async Audit Log (Supabase PostgreSQL)</text>
+    <text y="13" class="fc-text-desc">Insert transcript, score, category, timestamp</text>
+  </g>
+
+  <!-- Flow 6 -> Decision 3-Tier Threshold -->
+  <path d="M 500 725 L 500 760" class="arrow" marker-end="url(#arr)" />
+
+  <!-- Decision: Threshold Evaluation -->
+  <g transform="translate(500, 805)">
+    <polygon points="0 -40, 130 0, 0 40, -130 0" class="fc-decision" />
+    <text y="-5" class="fc-text-title" font-size="12" fill="#92400e">Evaluate Risk Score</text>
+    <text y="11" class="fc-text-desc">S_final Thresholds</text>
+  </g>
+
+  <!-- Branch 1: Safe (<40) -->
+  <path d="M 370 805 L 170 805 L 170 870" class="arrow" marker-end="url(#arr)" />
+  <text x="210" y="798" class="fc-branch-label" fill="#16a34a">S &lt; 40</text>
+
+  <!-- Branch 2: Suspicious (40-70) -->
+  <path d="M 500 845 L 500 870" class="arrow" marker-end="url(#arr)" />
+  <text x="510" y="860" class="fc-branch-label" fill="#ca8a04">40 ≤ S ≤ 70</text>
+
+  <!-- Branch 3: High Scam Alert (>70) -->
+  <path d="M 630 805 L 830 805 L 830 870" class="arrow" marker-end="url(#arr)" />
+  <text x="730" y="798" class="fc-branch-label" fill="#dc2626">S &gt; 70</text>
+
+  <!-- Alert State 1: Safe -->
+  <g transform="translate(170, 915)">
+    <rect x="-120" y="-40" width="240" height="80" class="fc-alert-safe" />
+    <text y="-18" class="fc-text-title" fill="#15803d">Green Zone: Low Risk</text>
+    <text y="0" class="fc-text-desc">• Radial Gauge: 0 - 39%</text>
+    <text y="15" class="fc-text-desc">• Status: "Normal Conversation"</text>
+    <text y="28" class="fc-text-desc">• Passive Background Monitor</text>
+  </g>
+
+  <!-- Alert State 2: Suspicious -->
+  <g transform="translate(500, 915)">
+    <rect x="-120" y="-40" width="240" height="80" class="fc-alert-warn" />
+    <text y="-18" class="fc-text-title" fill="#a16207">Amber Zone: Suspicious</text>
+    <text y="0" class="fc-text-desc">• Radial Gauge: 40 - 70%</text>
+    <text y="15" class="fc-text-desc">• Warning Banner Displayed</text>
+    <text y="28" class="fc-text-desc">• Prompt to Verify Caller</text>
+  </g>
+
+  <!-- Alert State 3: Critical -->
+  <g transform="translate(830, 915)">
+    <rect x="-120" y="-40" width="240" height="80" class="fc-alert-crit" />
+    <text y="-18" class="fc-text-title" fill="#b91c1c">Red Zone: High Scam Threat</text>
+    <text y="0" class="fc-text-desc">• Radial Gauge: &gt; 70%</text>
+    <text y="15" class="fc-text-desc">• Immediate Audio Alert</text>
+    <text y="28" class="fc-text-desc">• Advice: "Hang Up Immediately"</text>
+  </g>
+
+  <!-- Decision: Call Continues? -->
+  <path d="M 170 955 L 170 1010 L 410 1010" class="arrow" />
+  <path d="M 500 955 L 500 1010" class="arrow" />
+  <path d="M 830 955 L 830 1010 L 590 1010" class="arrow" />
+
+  <g transform="translate(500, 1010)">
+    <circle cx="0" cy="0" r="4" fill="#475569" />
+  </g>
+  <path d="M 500 1010 L 500 1035" class="arrow" marker-end="url(#arr)" />
+
+  <g transform="translate(500, 1060)">
+    <polygon points="0 -22, 90 0, 0 22, -90 0" class="fc-decision" />
+    <text y="4" class="fc-text-title" font-size="11" fill="#92400e">Call Ongoing?</text>
+  </g>
+
+  <!-- Loopback to Speech Recognition -->
+  <path d="M 410 1060 L 50 1060 L 50 175 L 320 175" class="arrow-back" marker-end="url(#arr-blue)" />
+  <text x="60" y="1050" class="fc-branch-label" fill="#0284c7">Yes (Continuous Stream)</text>
+
+  <!-- End Node -->
+  <path d="M 590 1060 L 760 1060 L 760 1080" class="arrow" marker-end="url(#arr)" />
+  <text x="630" y="1052" class="fc-branch-label" fill="#475569">No (Call Ended)</text>
+
+  <g transform="translate(760, 1105)">
+    <rect x="-140" y="-18" width="280" height="36" class="fc-start" fill="#f1f5f9" stroke="#475569" />
+    <text y="5" class="fc-text-title" font-size="12" fill="#334155">Compute Peak Risk &amp; Save History</text>
+  </g>
+
+</svg>

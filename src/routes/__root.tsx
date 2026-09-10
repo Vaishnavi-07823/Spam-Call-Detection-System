@@ -34,12 +34,12 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "VoxShield AI — Real-Time Scam Call Detection" },
+      { title: "TrueShield AI — Real-Time Scam Call Detection" },
       { name: "description", content: "AI-powered real-time scam call detection and protection." },
-      { name: "author", content: "VoxShield AI" },
+      { name: "author", content: "TrueShield AI" },
       { name: "theme-color", content: "#1a1a2e" },
-      { property: "og:title", content: "VoxShield AI — Real-Time Scam Call Detection" },
-      { name: "twitter:title", content: "VoxShield AI — Real-Time Scam Call Detection" },
+      { property: "og:title", content: "TrueShield AI — Real-Time Scam Call Detection" },
+      { name: "twitter:title", content: "TrueShield AI — Real-Time Scam Call Detection" },
       { property: "og:description", content: "AI-powered real-time scam call detection and protection." },
       { name: "twitter:description", content: "AI-powered real-time scam call detection and protection." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/53454237-cf7a-4473-bc17-df91008e2e23" },
@@ -113,7 +113,7 @@ function RootComponent() {
                 <span className="text-base">🛡️</span>
               </div>
               <span className="font-extrabold tracking-tight text-base sm:text-lg">
-                Vox<span className="text-primary">Shield</span> <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 font-bold ml-1">AI</span>
+                True<span className="text-primary">Shield</span> <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 font-bold ml-1">AI</span>
               </span>
             </Link>
 

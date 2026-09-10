@@ -1,0 +1,196 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .layer-bg { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; rx: 8; }
+      .layer-header { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 700; fill: #475569; letter-spacing: 1px; text-transform: uppercase; }
+      .box { rx: 6; stroke-width: 1.5; }
+      .box-title { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; }
+      .box-desc { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; fill: #64748b; }
+      .pill { rx: 12; font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; font-weight: 600; }
+      .arrow { stroke: #64748b; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .arrow-accent { stroke: #2563eb; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .arrow-crit { stroke: #dc2626; stroke-width: 2.2; fill: none; stroke-dasharray: 4 3; }
+      .flow-label { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: 600; fill: #3b82f6; }
+      .title-main { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 800; fill: #0f172a; }
+      .title-sub { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #64748b; }
+    </style>
+
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2563eb" />
+    </marker>
+    <marker id="arrowhead-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#059669" />
+    </marker>
+    <marker id="arrowhead-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#dc2626" />
+    </marker>
+    <filter id="shadow" x="-3%" y="-3%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1200" height="800" class="bg" />
+
+  <!-- Title Header Block -->
+  <rect x="40" y="24" width="1120" height="50" rx="6" fill="#ffffff" stroke="#e2e8f0" filter="url(#shadow)" />
+  <text x="60" y="47" class="title-main">Figure 1: VoxShield AI End-to-End System Architecture</text>
+  <text x="60" y="64" class="title-sub">Modular Architecture for Real-Time Streaming Speech Ingestion, Hybrid Lexical-Semantic Scam Analysis, and Active Telemetry</text>
+
+  <!-- LAYER 1: ACOUSTIC INGESTION & SPEECH-TO-TEXT LAYER -->
+  <rect x="40" y="95" width="1120" height="115" class="layer-bg" filter="url(#shadow)" />
+  <text x="60" y="118" class="layer-header">Tier 1: Real-Time Audio Capture &amp; Streaming ASR Layer</text>
+
+  <!-- Box 1.1: Audio Ingestion -->
+  <g transform="translate(60, 130)">
+    <rect width="220" height="65" class="box" fill="#eff6ff" stroke="#3b82f6" />
+    <text x="15" y="26" class="box-title" fill="#1e3a8a">Telephony Audio Stream</text>
+    <text x="15" y="42" class="box-desc">Ongoing Voice Call (Speakerphone)</text>
+    <text x="15" y="55" class="box-desc">Microphone Transducer (Web Audio)</text>
+  </g>
+
+  <!-- Flow 1.1 -> 1.2 -->
+  <path d="M 280 162 L 320 162" class="arrow-accent" marker-end="url(#arrowhead-blue)" />
+  <text x="286" y="155" class="flow-label">PCM</text>
+
+  <!-- Box 1.2: Web Speech Recognition API -->
+  <g transform="translate(325, 130)">
+    <rect width="250" height="65" class="box" fill="#eff6ff" stroke="#3b82f6" />
+    <text x="15" y="26" class="box-title" fill="#1e3a8a">Web Speech ASR Engine</text>
+    <text x="15" y="42" class="box-desc">Continuous &amp; Interim Transcription</text>
+    <text x="15" y="55" class="box-desc">Acoustic Models: en-IN &amp; hi-IN</text>
+  </g>
+
+  <!-- Flow 1.2 -> 1.3 -->
+  <path d="M 575 162 L 620 162" class="arrow-accent" marker-end="url(#arrowhead-blue)" />
+  <text x="581" y="155" class="flow-label">Tokens</text>
+
+  <!-- Box 1.3: Sliding Window Buffer -->
+  <g transform="translate(625, 130)">
+    <rect width="240" height="65" class="box" fill="#f8fafc" stroke="#64748b" />
+    <text x="15" y="26" class="box-title" fill="#334155">Sliding Temporal Buffer</text>
+    <text x="15" y="42" class="box-desc">Temporal Window Segmentation</text>
+    <text x="15" y="55" class="box-desc">Interim + Final Result Aggregator</text>
+  </g>
+
+  <!-- Flow 1.3 -> 1.4 -->
+  <path d="M 865 162 L 910 162" class="arrow-accent" marker-end="url(#arrowhead-blue)" />
+
+  <!-- Box 1.4: Input Sanitizer -->
+  <g transform="translate(915, 130)">
+    <rect width="225" height="65" class="box" fill="#f8fafc" stroke="#64748b" />
+    <text x="15" y="26" class="box-title" fill="#334155">Zod Validation &amp; Sanitizer</text>
+    <text x="15" y="42" class="box-desc">Length: 3 to 5000 Characters</text>
+    <text x="15" y="55" class="box-desc">Normalization &amp; Special Char Filter</text>
+  </g>
+
+  <!-- Vertical Bridge: Tier 1 to Tier 2 -->
+  <path d="M 1027 195 L 1027 235 L 600 235 L 600 260" class="arrow-accent" marker-end="url(#arrowhead-blue)" />
+  <text x="610" y="248" class="flow-label">Validated Real-Time Transcript Text</text>
+
+  <!-- LAYER 2: DUAL HYBRID ANALYSIS PIPELINE -->
+  <rect x="40" y="260" width="1120" height="230" class="layer-bg" filter="url(#shadow)" stroke="#93c5fd" />
+  <text x="60" y="285" class="layer-header">Tier 2: Dual-Engine Hybrid Scam Analysis Pipeline (Parallel Execution)</text>
+
+  <!-- Left Branch: Deterministic Lexical Engine -->
+  <g transform="translate(60, 305)">
+    <rect width="490" height="165" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5" />
+    <text x="20" y="26" class="box-title" fill="#14532d">Engine A: Deterministic Rule-Based Heuristic Matcher</text>
+    <text x="20" y="44" class="box-desc">Latency: &lt; 5 ms | Zero Network Overhead | Offline Capable</text>
+
+    <!-- Sub boxes inside Engine A -->
+    <rect x="20" y="58" width="215" height="50" rx="4" fill="#ffffff" stroke="#86efac" />
+    <text x="30" y="78" font-family="Segoe UI, Arial" font-size="12" font-weight="600" fill="#166534">Weighted Scam Lexicon</text>
+    <text x="30" y="94" font-family="Segoe UI, Arial" font-size="10" fill="#4b5563">OTP(75), CVV(75), AnyDesk(85)</text>
+
+    <rect x="250" y="58" width="220" height="50" rx="4" fill="#ffffff" stroke="#86efac" />
+    <text x="260" y="78" font-family="Segoe UI, Arial" font-size="12" font-weight="600" fill="#166534">Hinglish / Regional Patterns</text>
+    <text x="260" y="94" font-family="Segoe UI, Arial" font-size="10" fill="#4b5563">"Khata Block", "Bijli Kat", "Girftari"</text>
+
+    <rect x="20" y="116" width="450" height="38" rx="4" fill="#dcfce7" stroke="#4ade80" />
+    <text x="30" y="132" font-family="Segoe UI, Arial" font-size="11" font-weight="700" fill="#14532d">Output Tuple: ⟨ RuleScore ∈ [0, 100], MatchedKeywords[], Category, Reason ⟩</text>
+    <text x="30" y="146" font-family="Segoe UI, Arial" font-size="10" fill="#166534">Formula: S_rule = min(100, Σ w_i)</text>
+  </g>
+
+  <!-- Right Branch: LLM Semantic Engine -->
+  <g transform="translate(650, 305)">
+    <rect width="490" height="165" rx="6" fill="#faf5ff" stroke="#a855f7" stroke-width="1.5" />
+    <text x="20" y="26" class="box-title" fill="#581c87">Engine B: LLM Semantic Contextual Reasoning</text>
+    <text x="20" y="44" class="box-desc">Latency: ~600-1200 ms | Deep Semantic Disambiguation</text>
+
+    <!-- Sub boxes inside Engine B -->
+    <rect x="20" y="58" width="215" height="50" rx="4" fill="#ffffff" stroke="#d8b4fe" />
+    <text x="30" y="78" font-family="Segoe UI, Arial" font-size="12" font-weight="600" fill="#6b21a8">Google Gemini 1.5 Flash</text>
+    <text x="30" y="94" font-family="Segoe UI, Arial" font-size="10" fill="#4b5563">Lovable AI Gateway / Native API</text>
+
+    <rect x="250" y="58" width="220" height="50" rx="4" fill="#ffffff" stroke="#d8b4fe" />
+    <text x="260" y="78" font-family="Segoe UI, Arial" font-size="12" font-weight="600" fill="#6b21a8">Structured JSON Schema</text>
+    <text x="260" y="94" font-family="Segoe UI, Arial" font-size="10" fill="#4b5563">Tool Calling: analyze_transcript</text>
+
+    <rect x="20" y="116" width="450" height="38" rx="4" fill="#f3e8ff" stroke="#c084fc" />
+    <text x="30" y="132" font-family="Segoe UI, Arial" font-size="11" font-weight="700" fill="#581c87">Output Tuple: ⟨ AI_RiskScore ∈ [0, 100], Category, Reason, Suggestion ⟩</text>
+    <text x="30" y="146" font-family="Segoe UI, Arial" font-size="10" fill="#6b21a8">Contextual Social Engineering &amp; Coercion Detection</text>
+  </g>
+
+  <!-- Connectors to Tier 3 -->
+  <path d="M 305 470 L 305 515 L 490 515 L 490 530" class="arrow" marker-end="url(#arrowhead)" />
+  <path d="M 895 470 L 895 515 L 710 515 L 710 530" class="arrow" marker-end="url(#arrowhead)" />
+  <text x="320" y="508" class="flow-label" fill="#166534">Rule Tuple</text>
+  <text x="760" y="508" class="flow-label" fill="#7c3aed">LLM Tuple (Timeout: 6000ms)</text>
+
+  <!-- LAYER 3: DECISION, ARBITRATION & RISK FUSION LAYER -->
+  <rect x="40" y="530" width="1120" height="110" class="layer-bg" filter="url(#shadow)" stroke="#fed7aa" />
+  <text x="60" y="552" class="layer-header">Tier 3: Threat Arbitration &amp; Maximum Pooling Decision Core</text>
+
+  <!-- Max-Pooling Fusion Box -->
+  <g transform="translate(60, 565)">
+    <rect width="320" height="60" class="box" fill="#fff7ed" stroke="#f97316" />
+    <text x="15" y="24" class="box-title" fill="#9a3412">Maximum-Pooling Arbiter</text>
+    <text x="15" y="40" class="box-desc">S_final = max(S_rule, S_AI)</text>
+    <text x="15" y="52" class="box-desc">Ensures Zero False Negatives on Hard Keywords</text>
+  </g>
+
+  <!-- Fallback Circuit Breaker Box -->
+  <g transform="translate(410, 565)">
+    <rect width="330" height="60" class="box" fill="#fff7ed" stroke="#f97316" />
+    <text x="15" y="24" class="box-title" fill="#9a3412">Fault-Tolerant Circuit Breaker</text>
+    <text x="15" y="40" class="box-desc">If AI Timeout (&gt;6000ms) or Net Err:</text>
+    <text x="15" y="52" class="box-desc">Graceful Fallback to Rule-Based Engine</text>
+  </g>
+
+  <!-- Classification & Explanation Generator -->
+  <g transform="translate(770, 565)">
+    <rect width="370" height="60" class="box" fill="#fff7ed" stroke="#f97316" />
+    <text x="15" y="24" class="box-title" fill="#9a3412">Semantic Reason Synthesis</text>
+    <text x="15" y="40" class="box-desc">Fuses AI Contextual Explanation + Matched Keywords</text>
+    <text x="15" y="52" class="box-desc">Maps Primary Category to Canonical Scam Taxonomy</text>
+  </g>
+
+  <!-- Connectors from Tier 3 to Tier 4 -->
+  <path d="M 600 640 L 600 670" class="arrow-accent" marker-end="url(#arrowhead-blue)" />
+
+  <!-- LAYER 4: TELEMETRY, REAL-TIME HUD & CLOUD PERSISTENCE -->
+  <rect x="40" y="670" width="1120" height="105" class="layer-bg" filter="url(#shadow)" />
+  <text x="60" y="692" class="layer-header">Tier 4: Live Threat HUD &amp; Cloud Telemetry Persistence</text>
+
+  <!-- Client HUD -->
+  <g transform="translate(60, 703)">
+    <rect width="520" height="60" class="box" fill="#f8fafc" stroke="#3b82f6" />
+    <text x="15" y="22" class="box-title" fill="#1e3a8a">Client-Side Non-Blocking Heads-Up Display (HUD)</text>
+    <text x="15" y="38" class="box-desc">• Live Dynamic Risk Gauge (0 - 100) with Smooth Transitions</text>
+    <text x="15" y="51" class="box-desc">• Tri-tier Alerts: Safe (&lt;40), Warning (40-70), High Alert (&gt;70) + Advice</text>
+  </g>
+
+  <!-- Cloud Persistence & Analytics -->
+  <g transform="translate(620, 703)">
+    <rect width="520" height="60" class="box" fill="#f8fafc" stroke="#059669" />
+    <text x="15" y="22" class="box-title" fill="#065f46">Cloud Database &amp; Threat Intelligence Store (Supabase)</text>
+    <text x="15" y="38" class="box-desc">• PostgreSQL Detections Table (transcript, risk_score, category, reason)</text>
+    <text x="15" y="51" class="box-desc">• Historical Call Forensics, REST API /api/detect, Audit Telemetry</text>
+  </g>
+
+</svg>

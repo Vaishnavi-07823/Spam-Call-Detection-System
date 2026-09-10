@@ -16,11 +16,11 @@ export const Route = createFileRoute("/login")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign In — VoxShield AI" },
+      { title: "Sign In — TrueShield AI" },
       {
         name: "description",
         content:
-          "Sign in to VoxShield AI for real-time scam call detection and protection.",
+          "Sign in to TrueShield AI for real-time scam call detection and protection.",
       },
     ],
   }),

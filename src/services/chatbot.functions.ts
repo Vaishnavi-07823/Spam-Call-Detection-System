@@ -41,7 +41,7 @@ export const chatWithAI = createServerFn({ method: "POST" })
         messages: [
           {
             role: "system",
-            content: `You are VoxShield AI's cybersecurity education assistant. Your role is to educate users about:
+            content: `You are TrueShield AI's cybersecurity education assistant. Your role is to educate users about:
 - Phone scam tactics and how to recognize them
 - Common social engineering techniques
 - How to protect personal information

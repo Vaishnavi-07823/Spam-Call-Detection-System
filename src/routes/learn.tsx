@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const Route = createFileRoute("/learn")({
   head: () => ({
     meta: [
-      { title: "Learn — VoxShield AI" },
+      { title: "Learn — TrueShield AI" },
       { name: "description", content: "Cybersecurity tips to protect yourself from scam calls." },
     ],
   }),

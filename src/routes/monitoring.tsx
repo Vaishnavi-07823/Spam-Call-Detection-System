@@ -32,7 +32,7 @@ import { analyzeWithRules } from "@/services/riskAnalyzer";
 export const Route = createFileRoute("/monitoring")({
   head: () => ({
     meta: [
-      { title: "Live Monitoring — VoxShield AI" },
+      { title: "Live Monitoring — TrueShield AI" },
       { name: "description", content: "Live call monitoring and scam detection." },
     ],
   }),
@@ -607,7 +607,7 @@ function MonitoringPage() {
       if (hasOTP || detectedRisk.ruleScore >= 75) {
         // 🚨 AUTO-CUT! Scammer demanded OTP or high-risk coercion
         triggerProtectiveCallCut(
-          `Scammer (Live User Call): ${transcript}\nVictim: [VOXSHIELD INTERVENTION — Call Terminated Mid-Sentence to Protect OTP]`
+          `Scammer (Live User Call): ${transcript}\nVictim: [TRUESHIELD INTERVENTION — Call Terminated Mid-Sentence to Protect OTP]`
         );
       } else if (hasPoliceOrFreeze && conversationHistory.length <= 2) {
         // AI Victim responds nervously to threat

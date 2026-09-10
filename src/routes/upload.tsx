@@ -25,7 +25,7 @@ import { analyzeAudioFile } from "@/services/audioAnalysis.functions";
 export const Route = createFileRoute("/upload")({
   head: () => ({
     meta: [
-      { title: "Upload Recording — VoxShield AI" },
+      { title: "Upload Recording — TrueShield AI" },
       { name: "description", content: "Upload a call recording for AI-powered scam analysis." },
     ],
   }),
