@@ -76,140 +76,161 @@ function MonitoringPage() {
     };
   }, []);
 
-  // Distinct Female Voice (Pooja Sharma - Scammer / Bank Caller)
+  // Distinct Female Voice (Crystal-Clear Natural Hindi Girl Voice for Victim)
   const femaleVoice = useMemo(() => {
     if (!availableVoices.length) return null;
-    return (
-      availableVoices.find(
-        (v) =>
-          v.lang.toLowerCase().startsWith("hi") &&
-          /female|swara|kalpana|geeta|heera|kavya|google हिन्दी/i.test(v.name)
-      ) ||
-      availableVoices.find((v) => v.lang.toLowerCase().startsWith("hi")) ||
-      availableVoices.find(
-        (v) =>
-          v.lang.toLowerCase().includes("in") &&
-          /female|heera|neerja|priya|swara/i.test(v.name)
-      ) ||
-      availableVoices.find((v) =>
-        /female|zira|samantha|kavya|karen|victoria/i.test(v.name)
-      ) ||
-      availableVoices[0] ||
-      null
+    // 1. Natural Hindi female voice (Swara Online is studio quality in Edge/Windows)
+    const naturalHindiFemale = availableVoices.find(
+      (v) =>
+        v.lang.toLowerCase().startsWith("hi") &&
+        /swara|kalpana|geeta|heera|kavya|natural/i.test(v.name)
     );
+    if (naturalHindiFemale) return naturalHindiFemale;
+
+    // 2. Google Hindi (female in Chrome)
+    const googleHindi = availableVoices.find(
+      (v) => v.lang.toLowerCase().startsWith("hi") && /google/i.test(v.name)
+    );
+    if (googleHindi) return googleHindi;
+
+    // 3. Any Hindi voice
+    const anyHindi = availableVoices.find((v) => v.lang.toLowerCase().startsWith("hi"));
+    if (anyHindi) return anyHindi;
+
+    // 4. Indian English female voice
+    const inFemale = availableVoices.find(
+      (v) =>
+        v.lang.toLowerCase().includes("in") &&
+        /swara|heera|neerja|priya|female/i.test(v.name)
+    );
+    if (inFemale) return inFemale;
+
+    // 5. Any clear female voice
+    const anyFemale = availableVoices.find((v) =>
+      /female|zira|samantha|kavya|karen|victoria/i.test(v.name)
+    );
+    if (anyFemale) return anyFemale;
+
+    return availableVoices[0] || null;
   }, [availableVoices]);
 
-  // Distinct Male Voice (Account Holder / Victim)
+  // Distinct Male Voice (Authoritative Bank Scammer Voice)
   const maleVoice = useMemo(() => {
     if (!availableVoices.length) return null;
-    return (
-      availableVoices.find(
-        (v) =>
-          v.lang.toLowerCase().startsWith("hi") &&
-          /male|madhur|ravi|hemant|david/i.test(v.name)
-      ) ||
-      availableVoices.find(
-        (v) =>
-          v.lang.toLowerCase().includes("in") &&
-          /male|ravi|prabhat|david/i.test(v.name)
-      ) ||
-      availableVoices.find(
-        (v) =>
-          /male|david|george|mark|alex|daniel/i.test(v.name) &&
-          v.name !== femaleVoice?.name
-      ) ||
-      availableVoices.find((v) => v.name !== femaleVoice?.name) ||
-      availableVoices[0] ||
-      null
+    // 1. Hindi male voice (Madhur / Ravi / Hemant)
+    const hiMale = availableVoices.find(
+      (v) =>
+        v.lang.toLowerCase().startsWith("hi") &&
+        /madhur|ravi|hemant|david|male/i.test(v.name)
     );
+    if (hiMale) return hiMale;
+
+    // 2. Indian English male voice
+    const inMale = availableVoices.find(
+      (v) =>
+        v.lang.toLowerCase().includes("in") &&
+        /madhur|ravi|prabhat|david|male/i.test(v.name)
+    );
+    if (inMale) return inMale;
+
+    // 3. Any distinct male voice
+    const anyMale = availableVoices.find(
+      (v) =>
+        /male|david|george|mark|alex|daniel/i.test(v.name) &&
+        v.name !== femaleVoice?.name
+    );
+    if (anyMale) return anyMale;
+
+    const otherVoice = availableVoices.find((v) => v.name !== femaleVoice?.name);
+    return otherVoice || availableVoices[0] || null;
   }, [availableVoices, femaleVoice]);
 
-  // Simulated 2-Way Turn-by-Turn Hindi Phone Conversation (Female vs Male)
+  // Simulated 2-Way Turn-by-Turn Hindi Phone Conversation (Spammer Male vs Victim Girl)
   const SIMULATED_CONVERSATION = useMemo(
     () => [
       {
         speaker: "Scammer" as const,
-        speakerName: "Pooja Sharma (SBI Desk)",
-        gender: "female" as const,
-        role: "Caller (Bank Executive)",
-        hindi: "Namaste sir! Main State Bank of India Head Office Mumbai se Pooja Sharma bol rahi hoon. Kya meri baat account holder se ho rahi hai?",
-        english: "Hello sir! I am Pooja Sharma calling from SBI Head Office Mumbai. Am I speaking with the account holder?",
+        speakerName: "Rajesh Sharma (SBI Security Desk)",
+        gender: "male" as const,
+        role: "Caller (Bank Scammer)",
+        hindi: "Namaste madam! Main State Bank of India Mumbai Head Office se Rajesh Sharma bol raha hoon. Kya meri baat account holder se ho rahi hai?",
+        english: "Hello madam! I am Rajesh Sharma calling from SBI Mumbai Head Office. Am I speaking with the account holder?",
         risk: 12,
         status: "Safe Initial Contact",
-        pitch: 1.45,
-        rate: 1.0,
+        pitch: 0.88,
+        rate: 0.98,
       },
       {
         speaker: "You" as const,
         speakerName: "Account Holder (You)",
-        gender: "male" as const,
+        gender: "female" as const,
         role: "You (Target)",
-        hindi: "Haan ji namaste madam. Ji boliye, main account holder hi bol raha hoon. Kahiye kya kaam tha?",
-        english: "Yes hello madam. Yes, I am the account holder. How can I help you?",
+        hindi: "Haan ji namaste sir. Ji boliye, main account holder hi bol rahi hoon. Kahiye kya kaam tha?",
+        english: "Yes hello sir. Yes, I am the account holder. How can I help you?",
         risk: 12,
         status: "Safe Conversation",
-        pitch: 0.70,
-        rate: 0.94,
+        pitch: 1.10,
+        rate: 0.96,
       },
       {
         speaker: "Scammer" as const,
-        speakerName: "Pooja Sharma (SBI Desk)",
-        gender: "female" as const,
-        role: "Caller (Bank Executive)",
-        hindi: "Sir, aapka SBI Global debit card pichle 2 saal se active hai na? Bank ke database update ke liye bas ek routine verification chal raha hai.",
-        english: "Sir, your SBI Global debit card has been active for 2 years, right? This is a routine bank database update verification.",
+        speakerName: "Rajesh Sharma (SBI Security Desk)",
+        gender: "male" as const,
+        role: "Caller (Bank Scammer)",
+        hindi: "Madam, aapka SBI Global debit card pichle do saal se active hai na? Bank security update ke liye bas ek routine verification chal raha hai.",
+        english: "Madam, your SBI Global debit card has been active for 2 years, right? This is a routine bank database update verification.",
         risk: 24,
         status: "Trust Building & Verification Claim",
-        pitch: 1.45,
+        pitch: 0.88,
+        rate: 0.98,
+      },
+      {
+        speaker: "You" as const,
+        speakerName: "Account Holder (You)",
+        gender: "female" as const,
+        role: "You (Target)",
+        hindi: "Acha theek hai sir, par mere account ya card mein koi dikkat hai kya?",
+        english: "Okay sir, but is there any issue with my account or card?",
+        risk: 24,
+        status: "Trust Building & Verification Claim",
+        pitch: 1.10,
+        rate: 0.96,
+      },
+      {
+        speaker: "Scammer" as const,
+        speakerName: "Rajesh Sharma (SBI Security Desk)",
+        gender: "male" as const,
+        role: "Caller (Bank Scammer)",
+        hindi: "Ji madam! Naye RBI guidelines ke mutabik agar aaj raat 12 baje se pehle aapka e-KYC update nahi hua, toh aapka khata aur debit card permanently freeze ho jayega!",
+        english: "Yes madam! Under new RBI rules, if your e-KYC is not updated before midnight, your account and debit card will be permanently frozen!",
+        risk: 65,
+        status: "⚠️ Coercive Urgency & Account Freeze Threat",
+        pitch: 0.88,
         rate: 1.0,
       },
       {
         speaker: "You" as const,
         speakerName: "Account Holder (You)",
-        gender: "male" as const,
+        gender: "female" as const,
         role: "You (Target)",
-        hindi: "Acha theek hai madam, par mere account ya card mein koi dikkat hai kya?",
-        english: "Okay madam, but is there any issue with my account or card?",
-        risk: 24,
-        status: "Trust Building & Verification Claim",
-        pitch: 0.70,
-        rate: 0.94,
+        hindi: "Arre sir par main toh kal subah bank branch jaa kar aaram se apna KYC karwa lungi na!",
+        english: "Oh sir, but I can just visit my bank branch tomorrow morning and do the KYC easily!",
+        risk: 65,
+        status: "⚠️ Coercive Urgency & Account Freeze Threat",
+        pitch: 1.10,
+        rate: 0.96,
       },
       {
         speaker: "Scammer" as const,
-        speakerName: "Pooja Sharma (SBI Desk)",
-        gender: "female" as const,
-        role: "Caller (Bank Executive)",
-        hindi: "Ji sir! Naye RBI guidelines ke mutabik agar aaj raat 12 baje se pehle aapka e-KYC update nahi hua, toh aapka khata aur card permanently freeze ho jayega!",
-        english: "Yes sir! Under new RBI rules, if your e-KYC is not updated before midnight, your account and debit card will be permanently frozen!",
-        risk: 65,
-        status: "⚠️ Coercive Urgency & Account Freeze Threat",
-        pitch: 1.45,
-        rate: 1.02,
-      },
-      {
-        speaker: "You" as const,
-        speakerName: "Account Holder (You)",
+        speakerName: "Rajesh Sharma (SBI Security Desk)",
         gender: "male" as const,
-        role: "You (Target)",
-        hindi: "Arre madam par main toh kal subah bank branch jaa kar aaram se KYC karwa lunga na!",
-        english: "Oh madam, but I can just visit my bank branch tomorrow morning and do the KYC easily!",
-        risk: 65,
-        status: "⚠️ Coercive Urgency & Account Freeze Threat",
-        pitch: 0.70,
-        rate: 0.94,
-      },
-      {
-        speaker: "Scammer" as const,
-        speakerName: "Pooja Sharma (SBI Desk)",
-        gender: "female" as const,
-        role: "Caller (Bank Executive)",
-        hindi: "Nahi sir! Kal tak der ho jayegi, server lock ho jayega! Hum direct online unblock kar rahe hain. Maine aapke phone par 6-digit OTP bheja hai, turant apna OTP aur PIN batayein warna police complaint hogi aur khata band!",
-        english: "No sir! Tomorrow will be too late! We are unblocking online right now. I sent a 6-digit OTP to your mobile, share your OTP immediately or face police action and account closure!",
+        role: "Caller (Bank Scammer)",
+        hindi: "Nahi madam! Kal tak der ho jayegi, server lock ho jayega! Hum direct helpline se unblock kar rahe hain. Maine aapke phone par 6-digit OTP bheja hai, turant apna OTP aur PIN batayein warna police complaint hogi aur khata band!",
+        english: "No madam! Tomorrow will be too late! We are unblocking online right now. I sent a 6-digit OTP to your mobile, share your OTP immediately or face police action and account closure!",
         risk: 95,
         status: "🚨 CRITICAL: OTP Extortion & Police Threat",
-        pitch: 1.45,
-        rate: 1.04,
+        pitch: 0.88,
+        rate: 1.02,
       },
     ],
     []
@@ -804,11 +825,11 @@ function MonitoringPage() {
                   {/* Caller Photo Avatar with Ringing Pulse */}
                   <div className="relative mb-5">
                     <div className="w-28 h-28 rounded-full bg-red-500/20 flex items-center justify-center animate-ping absolute inset-0" />
-                    <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-pink-600 via-purple-600 to-indigo-600 p-1 flex items-center justify-center shadow-2xl relative">
+                    <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-slate-700 p-1 flex items-center justify-center shadow-2xl relative">
                       <div className="w-full h-full rounded-full bg-slate-900 flex flex-col items-center justify-center text-center">
-                        <span className="text-2xl">👩‍💼</span>
-                        <span className="text-[9px] font-bold text-pink-400 uppercase tracking-tight mt-0.5">
-                          SBI DESK
+                        <span className="text-3xl">👨‍💼</span>
+                        <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-tight mt-0.5">
+                          SBI SECURITY
                         </span>
                       </div>
                     </div>
@@ -816,10 +837,10 @@ function MonitoringPage() {
 
                   {/* Caller Information */}
                   <h2 className="text-2xl font-black tracking-tight text-white">
-                    SBI Customer Care
+                    SBI Security Department
                   </h2>
-                  <p className="text-xs font-semibold text-pink-300 mt-0.5">
-                    Pooja Sharma · Mumbai Head Office
+                  <p className="text-xs font-semibold text-cyan-300 mt-0.5">
+                    Rajesh Sharma · Head Office Cyber Cell
                   </p>
                   <p className="text-xs text-slate-400 font-mono mt-1">
                     +91 98112-78401
@@ -827,7 +848,7 @@ function MonitoringPage() {
 
                   <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-[10px] font-bold">
                     <AlertTriangle className="h-3 w-3" />
-                    <span>Suspected Bank Telemarketing / Impersonation</span>
+                    <span>Suspected Bank Impersonation / Credential Phishing</span>
                   </div>
 
                   {/* Quick Options Bar (Remind Me / Message) */}
@@ -883,7 +904,7 @@ function MonitoringPage() {
                       </span>
                     </div>
                     <h3 className="text-lg font-black text-white">
-                      SBI Customer Care (Pooja Sharma)
+                      SBI Security Desk (Rajesh Sharma)
                     </h3>
                     <p className="text-xs text-slate-400 font-mono">
                       {String(Math.floor(callDuration / 60)).padStart(2, "0")}:
@@ -953,23 +974,23 @@ function MonitoringPage() {
                         >
                           <div className="flex items-center gap-1 mb-0.5 px-1">
                             <span className="text-[10px] font-bold">
-                              {isScammer ? "👩 Pooja Sharma (SBI Caller)" : "👨 You (Account Holder)"}
+                              {isScammer ? "👨 Rajesh Sharma (SBI Caller)" : "👩 You (Account Holder)"}
                             </span>
                             <span
                               className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
                                 isScammer
-                                  ? "bg-pink-500/20 text-pink-300"
-                                  : "bg-blue-500/20 text-blue-300"
+                                  ? "bg-blue-500/20 text-blue-300"
+                                  : "bg-pink-500/20 text-pink-300"
                               }`}
                             >
-                              {isScammer ? "Female Voice" : "Male Voice"}
+                              {isScammer ? "Male Voice" : "Girl Voice"}
                             </span>
                           </div>
                           <div
                             className={`p-2.5 rounded-2xl text-xs max-w-[88%] leading-relaxed ${
                               isScammer
-                                ? "bg-pink-950/40 text-pink-50 rounded-tl-none border border-pink-500/40 shadow-sm"
-                                : "bg-blue-950/50 text-blue-50 rounded-tr-none border border-blue-500/40 shadow-sm"
+                                ? "bg-slate-900 text-slate-100 rounded-tl-none border border-slate-700 shadow-sm"
+                                : "bg-pink-950/40 text-pink-50 rounded-tr-none border border-pink-500/40 shadow-sm"
                             }`}
                           >
                             {msg.text}
@@ -985,8 +1006,8 @@ function MonitoringPage() {
                       <Volume2 className="h-4 w-4 text-primary animate-pulse" />
                       <span className="text-[11px] font-bold">
                         {currentTurn.speaker === "Scammer"
-                          ? "👩 Pooja speaking (Female Voice)..."
-                          : "👨 You speaking (Male Voice)..."}
+                          ? "👨 Rajesh speaking (Male Voice)..."
+                          : "👩 You speaking (Girl Voice)..."}
                       </span>
                     </div>
                     <span className="text-[10px] text-slate-400 font-medium">
