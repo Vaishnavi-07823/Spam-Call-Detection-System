@@ -38,7 +38,7 @@
 
   <!-- Title Header Block -->
   <rect x="40" y="24" width="1120" height="50" rx="6" fill="#ffffff" stroke="#e2e8f0" filter="url(#shadow)" />
-  <text x="60" y="47" class="title-main">Figure 1: VoxShield AI End-to-End System Architecture</text>
+  <text x="60" y="47" class="title-main">Figure 1: TrueShield AI End-to-End System Architecture</text>
   <text x="60" y="64" class="title-sub">Modular Architecture for Real-Time Streaming Speech Ingestion, Hybrid Lexical-Semantic Scam Analysis, and Active Telemetry</text>
 
   <!-- LAYER 1: ACOUSTIC INGESTION & SPEECH-TO-TEXT LAYER -->

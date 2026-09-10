@@ -24,13 +24,13 @@
 
   <!-- Header -->
   <rect x="40" y="20" width="1020" height="52" class="header-box" filter="url(#c-shadow)" />
-  <text x="60" y="43" class="title-main">Figure 4: VoxShield AI Phone Scam Threat Taxonomy &amp; Vector Ontology</text>
+  <text x="60" y="43" class="title-main">Figure 4: TrueShield AI Phone Scam Threat Taxonomy &amp; Vector Ontology</text>
   <text x="60" y="60" class="title-sub">Hierarchical Classification of Social Engineering Vectors, Acoustic Indicators, and Behavioral Triggers</text>
 
   <!-- Central Root Node -->
   <g transform="translate(450, 95)">
     <rect width="200" height="46" class="center-node" filter="url(#c-shadow)" />
-    <text x="100" y="22" font-family="Segoe UI, Arial" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">VOXSHIELD AI</text>
+    <text x="100" y="22" font-family="Segoe UI, Arial" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">TRUESHIELD AI</text>
     <text x="100" y="37" font-family="Segoe UI, Arial" font-size="10.5" fill="#94a3b8" text-anchor="middle">Threat Taxonomy Root</text>
   </g>
 
