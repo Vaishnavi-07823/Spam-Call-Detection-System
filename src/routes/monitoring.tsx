@@ -47,7 +47,7 @@ function MonitoringPage() {
 
   // Call simulator states
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
-  const [callState, setCallState] = useState<"ringing" | "connected" | "ended">("ringing");
+  const [callState, setCallState] = useState<"ringing" | "connected" | "interrupted" | "ended">("ringing");
   const [callDuration, setCallDuration] = useState(0);
   const [activeTurnIndex, setActiveTurnIndex] = useState(0);
   const [conversationHistory, setConversationHistory] = useState<
@@ -55,6 +55,8 @@ function MonitoringPage() {
   >([]);
   const ringtoneCtxRef = useRef<AudioContext | null>(null);
   const simulatorTimerRef = useRef<any>(null);
+  const autoCutTimerRef = useRef<any>(null);
+  const [manualInputText, setManualInputText] = useState("");
 
   // Load and cache browser voices for female vs male distinction
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -355,6 +357,31 @@ function MonitoringPage() {
     }
   };
 
+  /** Play realistic Telecom Disconnect 3-tone Beep Sequence */
+  const playDisconnectTone = () => {
+    try {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx();
+      // 3 fast beeps standard in mobile carrier call termination (425 Hz)
+      [0, 0.35, 0.7].forEach((delay) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(425, ctx.currentTime + delay);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.25);
+      });
+    } catch {
+      // Ignore if audio context not permitted
+    }
+  };
+
   /** Open Simulator & Start Ringtone */
   const openSimulator = () => {
     setIsSimulatorOpen(true);
@@ -368,21 +395,48 @@ function MonitoringPage() {
   const closeSimulator = () => {
     stopRingtone();
     clearTimeout(simulatorTimerRef.current);
+    clearTimeout(autoCutTimerRef.current);
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
     setIsSimulatorOpen(false);
   };
 
+  /** Protective Automatic Call Termination & Scammer Mute when OTP/Critical Risk is detected */
+  const triggerProtectiveCallCut = useCallback(
+    (transcriptText: string) => {
+      // 1. Instantly silence the scammer!
+      clearTimeout(simulatorTimerRef.current);
+      clearTimeout(autoCutTimerRef.current);
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+
+      // 2. Play telecom disconnect tones & haptic buzz
+      playDisconnectTone();
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 400]);
+      }
+
+      // 3. Show the emergency protective call-cut state in the smartphone UI
+      setCallState("interrupted");
+
+      // 4. After 2.4 seconds of showing the auto-cut screen, navigate to the threat alert report
+      setTimeout(() => {
+        closeSimulator();
+        handleAnalyze(transcriptText);
+      }, 2400);
+    },
+    [handleAnalyze]
+  );
+
   /** Play next dialogue turn in the 2-way conversation */
   const playTurn = useCallback(
     (index: number) => {
       if (index >= SIMULATED_CONVERSATION.length) {
-        // Final scam line completed — trigger alert
         const fullTranscript = SIMULATED_CONVERSATION.map(
           (t) => `${t.speakerName}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`
         ).join("\n");
-
         closeSimulator();
         handleAnalyze(fullTranscript);
         return;
@@ -403,6 +457,20 @@ function MonitoringPage() {
         },
       ]);
 
+      // CRITICAL PROTECTIVE INTERVENTION:
+      // When the scammer reaches Turn 6 (OTP / Police threat demand, risk >= 90%),
+      // VoxShield automatically mutes the scammer and disconnects the call mid-sentence!
+      if (turn.risk >= 90) {
+        const fullTranscriptSoFar = SIMULATED_CONVERSATION.slice(0, index + 1)
+          .map((t) => `${t.speakerName}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`)
+          .join("\n");
+
+        // Scammer begins speaking line... Exactly 2.8 seconds in (as soon as OTP is uttered), CUT THE CALL!
+        autoCutTimerRef.current = setTimeout(() => {
+          triggerProtectiveCallCut(fullTranscriptSoFar);
+        }, 2800);
+      }
+
       if (typeof window !== "undefined" && window.speechSynthesis) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
@@ -419,6 +487,7 @@ function MonitoringPage() {
         utterance.rate = turn.rate;
 
         utterance.onend = () => {
+          // If already interrupted, do not proceed to next turn
           simulatorTimerRef.current = setTimeout(() => {
             playTurn(index + 1);
           }, 1100);
@@ -437,7 +506,7 @@ function MonitoringPage() {
         }, 3000);
       }
     },
-    [SIMULATED_CONVERSATION, selectedLang, femaleVoice, maleVoice, handleAnalyze]
+    [SIMULATED_CONVERSATION, selectedLang, femaleVoice, maleVoice, handleAnalyze, triggerProtectiveCallCut]
   );
 
   /** Accept simulated call — starts 2-way natural conversation */
@@ -447,18 +516,14 @@ function MonitoringPage() {
     playTurn(0);
   };
 
-  /** Instant fast-forward to scam alert */
+  /** Instant fast-forward to scam alert with protective call-cut */
   const handleSkipToScam = () => {
-    clearTimeout(simulatorTimerRef.current);
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-    closeSimulator();
-    handleAnalyze(
+    const threatText =
       selectedLang === "hi-IN"
-        ? "Namaste, SBI bank se bol rahe hain. Aapka khata aur card block ho gaya hai. Turant 6-digit OTP bataiye warna police case aur khata band hoga!"
-        : "Hello, this is State Bank fraud team. Your card is blocked. Give your 6-digit OTP right now or face police arrest and account freeze!"
-    );
+        ? "Rajesh Sharma (SBI Security Desk): Namaste, SBI bank se bol rahe hain. Aapka khata aur card block ho gaya hai. Turant 6-digit OTP bataiye warna police case aur khata band hoga!"
+        : "Rajesh Sharma (SBI Security Desk): Hello, this is State Bank fraud team. Your card is blocked. Give your 6-digit OTP right now or face police arrest and account freeze!";
+
+    triggerProtectiveCallCut(threatText);
   };
 
   // Call duration counter
@@ -635,6 +700,40 @@ function MonitoringPage() {
                     >
                       ✅ Fast Safe Demo
                     </Button>
+                  </div>
+
+                  {/* Direct Text Input Fallback (for testing without microphone) */}
+                  <div className="pt-2 w-full">
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={manualInputText}
+                        onChange={(e) => setManualInputText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && manualInputText.trim()) {
+                            handleAnalyze(manualInputText.trim());
+                          }
+                        }}
+                        placeholder={
+                          selectedLang === "hi-IN"
+                            ? "Type or paste Hindi call line to test..."
+                            : "Type or paste English call line to test..."
+                        }
+                        className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-slate-900/90 border border-border/60 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                      />
+                      <Button
+                        size="sm"
+                        className="h-8 px-3 text-xs font-semibold"
+                        disabled={!manualInputText.trim() || isAnalyzing}
+                        onClick={() => {
+                          if (manualInputText.trim()) {
+                            handleAnalyze(manualInputText.trim());
+                          }
+                        }}
+                      >
+                        Test
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -890,6 +989,39 @@ function MonitoringPage() {
                       </button>
                       <span className="text-xs font-bold text-emerald-400">Accept</span>
                     </div>
+                  </div>
+                </div>
+              ) : callState === "interrupted" ? (
+                /* Protective Auto-Cut & Scammer Mute Screen */
+                <div className="flex flex-col items-center text-center w-full py-8 px-2 animate-in fade-in duration-200">
+                  <div className="relative mb-5">
+                    <div className="w-24 h-24 rounded-full bg-red-600/30 flex items-center justify-center animate-ping absolute inset-0" />
+                    <div className="w-24 h-24 rounded-full bg-red-600 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.7)] relative">
+                      <PhoneOff className="h-10 w-10 text-white animate-bounce" />
+                    </div>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/50 text-red-300 text-[10px] font-black uppercase tracking-wider mb-3">
+                    <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
+                    <span>CALL TERMINATED BY AI DEFENSE</span>
+                  </div>
+
+                  <h3 className="text-xl font-black text-white leading-tight">
+                    Scammer Muted & Call Disconnected!
+                  </h3>
+
+                  <p className="text-xs text-red-300/90 font-medium mt-2 leading-relaxed max-w-[280px]">
+                    🚨 <span className="font-bold">OTP Extortion detected</span>. The scammer was instantly muted mid-sentence and the connection severed to protect your credentials.
+                  </p>
+
+                  <div className="mt-6 flex flex-col items-center gap-2 w-full p-3 rounded-2xl bg-red-950/40 border border-red-500/30">
+                    <div className="flex items-center gap-2 text-xs text-amber-300 font-semibold">
+                      <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
+                      <span>Generating Incident Forensic Report...</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400">
+                      Auto-redirecting to Threat Alert in 2 seconds
+                    </span>
                   </div>
                 </div>
               ) : (
