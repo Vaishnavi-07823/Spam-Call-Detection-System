@@ -47,6 +47,7 @@ function MonitoringPage() {
 
   // Call simulator states
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const [simulatorMode, setSimulatorMode] = useState<"bot" | "user_scammer">("bot");
   const [callState, setCallState] = useState<"ringing" | "connected" | "interrupted" | "ended">("ringing");
   const [callDuration, setCallDuration] = useState(0);
   const [activeTurnIndex, setActiveTurnIndex] = useState(0);
@@ -383,7 +384,8 @@ function MonitoringPage() {
   };
 
   /** Open Simulator & Start Ringtone */
-  const openSimulator = () => {
+  const openSimulator = (mode: "bot" | "user_scammer" = "bot") => {
+    setSimulatorMode(mode);
     setIsSimulatorOpen(true);
     setCallState("ringing");
     setCallDuration(0);
@@ -394,6 +396,7 @@ function MonitoringPage() {
 
   const closeSimulator = () => {
     stopRingtone();
+    stopListening();
     clearTimeout(simulatorTimerRef.current);
     clearTimeout(autoCutTimerRef.current);
     if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -405,9 +408,10 @@ function MonitoringPage() {
   /** Protective Automatic Call Termination & Scammer Mute when OTP/Critical Risk is detected */
   const triggerProtectiveCallCut = useCallback(
     (transcriptText: string) => {
-      // 1. Instantly silence the scammer!
+      // 1. Instantly silence the call and stop mic
       clearTimeout(simulatorTimerRef.current);
       clearTimeout(autoCutTimerRef.current);
+      stopListening();
       if (typeof window !== "undefined" && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -427,7 +431,7 @@ function MonitoringPage() {
         handleAnalyze(transcriptText);
       }, 2400);
     },
-    [handleAnalyze]
+    [handleAnalyze, stopListening]
   );
 
   /** Play next dialogue turn in the 2-way conversation */
@@ -509,12 +513,126 @@ function MonitoringPage() {
     [SIMULATED_CONVERSATION, selectedLang, femaleVoice, maleVoice, handleAnalyze, triggerProtectiveCallCut]
   );
 
-  /** Accept simulated call — starts 2-way natural conversation */
+  /** Voice Response Synthesizer for AI Victim (Girl Voice) */
+  const speakVictimResponse = useCallback(
+    (text: string, onDone?: () => void) => {
+      if (typeof window === "undefined" || !window.speechSynthesis) {
+        onDone?.();
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = selectedLang === "hi-IN" ? "hi-IN" : "en-IN";
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+      }
+      utterance.pitch = 1.12;
+      utterance.rate = 0.98;
+      utterance.onend = () => onDone?.();
+      utterance.onerror = () => onDone?.();
+      window.speechSynthesis.speak(utterance);
+    },
+    [selectedLang, femaleVoice]
+  );
+
+  /** Accept simulated call — starts 2-way conversation or live user roleplay */
   const handleAcceptSimulatedCall = () => {
     stopRingtone();
     setCallState("connected");
-    playTurn(0);
+
+    if (simulatorMode === "user_scammer") {
+      // User is the scammer! The AI Victim picks up and greets the user first in Hindi girl voice
+      const initialGreeting =
+        selectedLang === "hi-IN"
+          ? "Haan ji namaste, kaun bol raha hai? Ji kahiye kya kaam tha?"
+          : "Hello, yes who is speaking? How may I help you?";
+
+      setConversationHistory([
+        {
+          speaker: "You",
+          speakerName: "Account Holder (Priya Sharma)",
+          text: initialGreeting,
+          risk: 10,
+          status: "Call Picked Up — Listening to Caller",
+        },
+      ]);
+
+      speakVictimResponse(initialGreeting, () => {
+        // Start listening to the user speaking into the microphone
+        resetTranscript();
+        startListening();
+      });
+    } else {
+      // Pre-recorded realistic 2-way bot dialogue
+      playTurn(0);
+    }
   };
+
+  /** In User-Scammer Mode: Watch user's live speech and respond as innocent victim, or auto-cut on OTP/Urgency */
+  useEffect(() => {
+    if (
+      isSimulatorOpen &&
+      simulatorMode === "user_scammer" &&
+      callState === "connected" &&
+      transcript.trim()
+    ) {
+      const lower = transcript.toLowerCase();
+      const detectedRisk = analyzeWithRules(transcript);
+
+      // Check if user (acting as scammer) demanded OTP, password, card details, or threatened police
+      const hasOTP = /otp|one time password|pin|cvv|6-digit|6 digit|password|code/i.test(lower);
+      const hasPoliceOrFreeze = /police|arrest|jail|freeze|block|band|suspend|fir/i.test(lower);
+
+      if (hasOTP || detectedRisk.ruleScore >= 75) {
+        // 🚨 AUTO-CUT! Scammer demanded OTP or high-risk coercion
+        triggerProtectiveCallCut(
+          `Scammer (Live User Call): ${transcript}\nVictim: [VOXSHIELD INTERVENTION — Call Terminated Mid-Sentence to Protect OTP]`
+        );
+      } else if (hasPoliceOrFreeze && conversationHistory.length <= 2) {
+        // AI Victim responds nervously to threat
+        const responseText =
+          selectedLang === "hi-IN"
+            ? "Arre sir please account freeze mat kijiye! Par bank wale toh kabhi call par details nahi maangte na?"
+            : "Oh please do not freeze my account sir! But banks never ask for credentials on call right?";
+
+        setConversationHistory((prev) => [
+          ...prev,
+          {
+            speaker: "Scammer",
+            speakerName: "You (Live Caller / Scammer)",
+            text: transcript,
+            risk: detectedRisk.ruleScore,
+            status: "Suspicious Bank Threat Detected",
+          },
+          {
+            speaker: "You",
+            speakerName: "Account Holder (Priya Sharma)",
+            text: responseText,
+            risk: detectedRisk.ruleScore,
+            status: "Victim Responding with Caution",
+          },
+        ]);
+
+        stopListening();
+        speakVictimResponse(responseText, () => {
+          resetTranscript();
+          startListening();
+        });
+      }
+    }
+  }, [
+    transcript,
+    isSimulatorOpen,
+    simulatorMode,
+    callState,
+    selectedLang,
+    conversationHistory.length,
+    speakVictimResponse,
+    stopListening,
+    startListening,
+    resetTranscript,
+    triggerProtectiveCallCut,
+  ]);
 
   /** Instant fast-forward to scam alert with protective call-cut */
   const handleSkipToScam = () => {
@@ -653,15 +771,23 @@ function MonitoringPage() {
                 </p>
               </div>
 
-              {/* Showstopper: Realistic 2-Way Simulator Button */}
-              <div className="w-full pt-3 border-t border-border/40">
+              {/* Showstopper: Realistic Call Simulators */}
+              <div className="w-full pt-3 border-t border-border/40 flex flex-col gap-2">
                 <Button
                   variant="outline"
-                  className="w-full text-xs h-12 font-bold border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 gap-2 shadow-sm transition-all hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-                  onClick={openSimulator}
+                  className="w-full text-xs h-11 font-bold border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 gap-2 shadow-sm transition-all hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                  onClick={() => openSimulator("bot")}
                 >
                   <Phone className="h-4 w-4 animate-bounce" />
-                  📞 Launch 2-Way Realistic Call Simulator
+                  📞 1. Auto 2-Way Call Simulator (Bot vs Bot)
+                </Button>
+
+                <Button
+                  className="w-full text-xs h-11 font-bold bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white gap-2 shadow-md hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all"
+                  onClick={() => openSimulator("user_scammer")}
+                >
+                  <PhoneCall className="h-4 w-4 animate-pulse" />
+                  🎙️ 2. Live Roleplay: You Call as Scammer
                 </Button>
               </div>
 
@@ -926,9 +1052,11 @@ function MonitoringPage() {
                     <div className="w-28 h-28 rounded-full bg-red-500/20 flex items-center justify-center animate-ping absolute inset-0" />
                     <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-slate-700 p-1 flex items-center justify-center shadow-2xl relative">
                       <div className="w-full h-full rounded-full bg-slate-900 flex flex-col items-center justify-center text-center">
-                        <span className="text-3xl">👨‍💼</span>
+                        <span className="text-3xl">
+                          {simulatorMode === "user_scammer" ? "👩" : "👨‍💼"}
+                        </span>
                         <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-tight mt-0.5">
-                          SBI SECURITY
+                          {simulatorMode === "user_scammer" ? "PRIYA SHARMA" : "SBI SECURITY"}
                         </span>
                       </div>
                     </div>
@@ -936,18 +1064,26 @@ function MonitoringPage() {
 
                   {/* Caller Information */}
                   <h2 className="text-2xl font-black tracking-tight text-white">
-                    SBI Security Department
+                    {simulatorMode === "user_scammer"
+                      ? "Priya Sharma (Victim)"
+                      : "SBI Security Department"}
                   </h2>
                   <p className="text-xs font-semibold text-cyan-300 mt-0.5">
-                    Rajesh Sharma · Head Office Cyber Cell
+                    {simulatorMode === "user_scammer"
+                      ? "Account Holder · Answering Call..."
+                      : "Rajesh Sharma · Head Office Cyber Cell"}
                   </p>
                   <p className="text-xs text-slate-400 font-mono mt-1">
-                    +91 98112-78401
+                    {simulatorMode === "user_scammer" ? "+91 98451-22910" : "+91 98112-78401"}
                   </p>
 
                   <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-[10px] font-bold">
                     <AlertTriangle className="h-3 w-3" />
-                    <span>Suspected Bank Impersonation / Credential Phishing</span>
+                    <span>
+                      {simulatorMode === "user_scammer"
+                        ? "🎙️ You are Caller: Speak into mic to scam, ask OTP to trigger Auto-Cut!"
+                        : "Suspected Bank Impersonation / Credential Phishing"}
+                    </span>
                   </div>
 
                   {/* Quick Options Bar (Remind Me / Message) */}
@@ -1032,11 +1168,15 @@ function MonitoringPage() {
                     <div className="flex items-center gap-2 mb-0.5">
                       <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                       <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                        CALL CONNECTED (HINDI)
+                        {simulatorMode === "user_scammer"
+                          ? "LIVE CALL: YOU ARE CALLER"
+                          : "CALL CONNECTED (HINDI)"}
                       </span>
                     </div>
                     <h3 className="text-lg font-black text-white">
-                      SBI Security Desk (Rajesh Sharma)
+                      {simulatorMode === "user_scammer"
+                        ? "Priya Sharma (Account Holder)"
+                        : "SBI Security Desk (Rajesh Sharma)"}
                     </h3>
                     <p className="text-xs text-slate-400 font-mono">
                       {String(Math.floor(callDuration / 60)).padStart(2, "0")}:
@@ -1091,7 +1231,7 @@ function MonitoringPage() {
                     </div>
                   </div>
 
-                  {/* 2-Way Turn-by-Turn Natural Hindi Dialogue Stream */}
+                  {/* 2-Way Dialogue Stream */}
                   <div className="w-full space-y-2.5 max-h-52 overflow-y-auto pr-1 my-2">
                     {conversationHistory.map((msg, idx) => {
                       const isScammer = msg.speaker === "Scammer";
@@ -1106,7 +1246,13 @@ function MonitoringPage() {
                         >
                           <div className="flex items-center gap-1 mb-0.5 px-1">
                             <span className="text-[10px] font-bold">
-                              {isScammer ? "👨 Rajesh Sharma (SBI Caller)" : "👩 You (Account Holder)"}
+                              {simulatorMode === "user_scammer"
+                                ? isScammer
+                                  ? "🎙️ You (Live Caller / Scammer)"
+                                  : "👩 Priya (Account Holder)"
+                                : isScammer
+                                  ? "👨 Rajesh Sharma (SBI Caller)"
+                                  : "👩 You (Account Holder)"}
                             </span>
                             <span
                               className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
@@ -1115,7 +1261,7 @@ function MonitoringPage() {
                                   : "bg-pink-500/20 text-pink-300"
                               }`}
                             >
-                              {isScammer ? "Male Voice" : "Girl Voice"}
+                              {isScammer ? "Caller" : "Girl Voice"}
                             </span>
                           </div>
                           <div
@@ -1135,15 +1281,30 @@ function MonitoringPage() {
                   {/* Live Speaker Telemetry Indicator */}
                   <div className="w-full py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs mt-1">
                     <div className="flex items-center gap-2 text-slate-300">
-                      <Volume2 className="h-4 w-4 text-primary animate-pulse" />
-                      <span className="text-[11px] font-bold">
-                        {currentTurn.speaker === "Scammer"
-                          ? "👨 Rajesh speaking (Male Voice)..."
-                          : "👩 You speaking (Girl Voice)..."}
-                      </span>
+                      {simulatorMode === "user_scammer" ? (
+                        <>
+                          <Mic className="h-4 w-4 text-red-400 animate-pulse" />
+                          <span className="text-[11px] font-bold text-red-300">
+                            Speak to scam: Try saying &ldquo;OTP bataiye&rdquo;...
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="h-4 w-4 text-primary animate-pulse" />
+                          <span className="text-[11px] font-bold">
+                            {currentTurn.speaker === "Scammer"
+                              ? "👨 Rajesh speaking (Male Voice)..."
+                              : "👩 You speaking (Girl Voice)..."}
+                          </span>
+                        </>
+                      )}
                     </div>
                     <span className="text-[10px] text-slate-400 font-medium">
-                      {currentTurn.status}
+                      {simulatorMode === "user_scammer"
+                        ? isListening
+                          ? "Mic Live"
+                          : "Connecting..."
+                        : currentTurn.status}
                     </span>
                   </div>
 
