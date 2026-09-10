@@ -8,6 +8,8 @@ interface SpeechRecognitionHook {
   transcript: string;
   isListening: boolean;
   error: string | null;
+  lang: string;
+  setLang: (lang: string) => void;
   startListening: () => void;
   stopListening: () => void;
   resetTranscript: () => void;
@@ -24,10 +26,11 @@ interface SpeechRecognitionErrorEvent {
   message: string;
 }
 
-export function useSpeechRecognition(): SpeechRecognitionHook {
+export function useSpeechRecognition(initialLang: string = "en-IN"): SpeechRecognitionHook {
   const [transcript, setTranscript] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lang, setLang] = useState(initialLang);
   const recognitionRef = useRef<any>(null);
 
   /** Initialize the speech recognition instance */
@@ -44,10 +47,10 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = "en-IN";
+    recognition.lang = lang;
 
     return recognition;
-  }, []);
+  }, [lang]);
 
   /** Start continuous speech recognition */
   const startListening = useCallback(() => {

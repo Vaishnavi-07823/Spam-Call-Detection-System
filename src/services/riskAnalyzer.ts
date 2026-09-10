@@ -72,6 +72,26 @@ const SCAM_KEYWORDS: { keyword: string; weight: number; category: string }[] = [
   { keyword: "kbc", weight: 70, category: "lottery_scam" },
   { keyword: "prize", weight: 50, category: "lottery_scam" },
   { keyword: "congratulations", weight: 25, category: "lottery_scam" },
+
+  // Indian Hindi / Hinglish Common Scam Patterns
+  { keyword: "khata band", weight: 65, category: "financial_fraud" },
+  { keyword: "khata block", weight: 70, category: "financial_fraud" },
+  { keyword: "paisa bhejo", weight: 65, category: "financial_fraud" },
+  { keyword: "paise bhejo", weight: 65, category: "financial_fraud" },
+  { keyword: "bijli kat", weight: 70, category: "financial_fraud" },
+  { keyword: "bijli bill", weight: 60, category: "financial_fraud" },
+  { keyword: "light cut", weight: 55, category: "financial_fraud" },
+  { keyword: "girftari", weight: 80, category: "impersonation" },
+  { keyword: "police thana", weight: 75, category: "impersonation" },
+  { keyword: "thana", weight: 50, category: "impersonation" },
+  { keyword: "court case", weight: 70, category: "impersonation" },
+  { keyword: "inaam", weight: 65, category: "lottery_scam" },
+  { keyword: "inaam jeeta", weight: 75, category: "lottery_scam" },
+  { keyword: "sim block", weight: 60, category: "verification_scam" },
+  { keyword: "sim band", weight: 60, category: "verification_scam" },
+  { keyword: "turant", weight: 30, category: "pressure_tactic" },
+  { keyword: "jaldi", weight: 25, category: "pressure_tactic" },
+  { keyword: "abhi ke abhi", weight: 40, category: "pressure_tactic" },
 ];
 
 export interface RuleAnalysisResult {
