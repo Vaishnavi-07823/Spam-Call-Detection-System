@@ -8,59 +8,70 @@
 
 /** Weighted scam keywords — higher weight = stronger signal */
 const SCAM_KEYWORDS: { keyword: string; weight: number; category: string }[] = [
-  // Financial fraud signals
-  { keyword: "otp", weight: 15, category: "credential_theft" },
-  { keyword: "one time password", weight: 15, category: "credential_theft" },
-  { keyword: "password", weight: 12, category: "credential_theft" },
-  { keyword: "pin number", weight: 12, category: "credential_theft" },
-  { keyword: "bank account", weight: 14, category: "financial_fraud" },
-  { keyword: "credit card", weight: 14, category: "financial_fraud" },
-  { keyword: "social security", weight: 16, category: "identity_theft" },
-  { keyword: "ssn", weight: 16, category: "identity_theft" },
+  // High-Critical Credential & Banking Theft (Asking for these is an immediate scam)
+  { keyword: "otp", weight: 75, category: "credential_theft" },
+  { keyword: "one time password", weight: 75, category: "credential_theft" },
+  { keyword: "cvv", weight: 75, category: "credential_theft" },
+  { keyword: "pin", weight: 60, category: "credential_theft" },
+  { keyword: "pin number", weight: 65, category: "credential_theft" },
+  { keyword: "upi pin", weight: 75, category: "credential_theft" },
+  { keyword: "password", weight: 60, category: "credential_theft" },
+  { keyword: "net banking", weight: 40, category: "credential_theft" },
 
-  // Urgency & pressure tactics
-  { keyword: "urgent", weight: 10, category: "pressure_tactic" },
-  { keyword: "immediately", weight: 8, category: "pressure_tactic" },
-  { keyword: "right now", weight: 8, category: "pressure_tactic" },
-  { keyword: "act fast", weight: 10, category: "pressure_tactic" },
-  { keyword: "limited time", weight: 8, category: "pressure_tactic" },
-  { keyword: "expire", weight: 7, category: "pressure_tactic" },
+  // Critical Remote Access Tools
+  { keyword: "anydesk", weight: 85, category: "tech_support_scam" },
+  { keyword: "teamviewer", weight: 85, category: "tech_support_scam" },
+  { keyword: "quicksupport", weight: 80, category: "tech_support_scam" },
+  { keyword: "remote access", weight: 70, category: "tech_support_scam" },
+  { keyword: "screen share", weight: 65, category: "tech_support_scam" },
+  { keyword: "download app", weight: 40, category: "tech_support_scam" },
+  { keyword: "apk", weight: 60, category: "tech_support_scam" },
 
-  // Verification scams
-  { keyword: "verify your", weight: 12, category: "verification_scam" },
-  { keyword: "confirm your identity", weight: 13, category: "verification_scam" },
-  { keyword: "verify your account", weight: 13, category: "verification_scam" },
-  { keyword: "update your information", weight: 10, category: "verification_scam" },
+  // Impersonation & Police/Govt Threats
+  { keyword: "cbi", weight: 80, category: "impersonation" },
+  { keyword: "police", weight: 65, category: "impersonation" },
+  { keyword: "arrest warrant", weight: 85, category: "impersonation" },
+  { keyword: "arrest", weight: 55, category: "impersonation" },
+  { keyword: "customs", weight: 70, category: "impersonation" },
+  { keyword: "narcotics", weight: 75, category: "impersonation" },
+  { keyword: "illegal parcel", weight: 80, category: "impersonation" },
+  { keyword: "fedex", weight: 50, category: "impersonation" },
+  { keyword: "irs", weight: 60, category: "impersonation" },
+  { keyword: "tax department", weight: 50, category: "impersonation" },
+  { keyword: "law enforcement", weight: 60, category: "impersonation" },
+  { keyword: "legal action", weight: 55, category: "impersonation" },
 
-  // Payment & money transfer
-  { keyword: "wire transfer", weight: 14, category: "financial_fraud" },
-  { keyword: "money transfer", weight: 13, category: "financial_fraud" },
-  { keyword: "payment", weight: 8, category: "financial_fraud" },
-  { keyword: "gift card", weight: 15, category: "financial_fraud" },
-  { keyword: "bitcoin", weight: 12, category: "financial_fraud" },
-  { keyword: "cryptocurrency", weight: 10, category: "financial_fraud" },
+  // Financial, KYC & Account Blocking
+  { keyword: "blocked", weight: 45, category: "financial_fraud" },
+  { keyword: "block", weight: 35, category: "financial_fraud" },
+  { keyword: "suspended", weight: 45, category: "financial_fraud" },
+  { keyword: "kyc", weight: 60, category: "verification_scam" },
+  { keyword: "aadhaar", weight: 40, category: "identity_theft" },
+  { keyword: "pan card", weight: 45, category: "identity_theft" },
+  { keyword: "bank account", weight: 40, category: "financial_fraud" },
+  { keyword: "credit card", weight: 40, category: "financial_fraud" },
+  { keyword: "debit card", weight: 40, category: "financial_fraud" },
+  { keyword: "gift card", weight: 60, category: "financial_fraud" },
+  { keyword: "wire transfer", weight: 50, category: "financial_fraud" },
+  { keyword: "money transfer", weight: 45, category: "financial_fraud" },
+  { keyword: "electricity bill", weight: 60, category: "financial_fraud" },
+  { keyword: "power cut", weight: 50, category: "financial_fraud" },
+  { keyword: "refund", weight: 40, category: "financial_fraud" },
 
-  // Impersonation signals
-  { keyword: "irs", weight: 14, category: "impersonation" },
-  { keyword: "tax department", weight: 12, category: "impersonation" },
-  { keyword: "law enforcement", weight: 12, category: "impersonation" },
-  { keyword: "arrest warrant", weight: 16, category: "impersonation" },
-  { keyword: "legal action", weight: 12, category: "impersonation" },
-  { keyword: "suspended", weight: 10, category: "impersonation" },
+  // Urgency & Pressure Tactics
+  { keyword: "urgent", weight: 35, category: "pressure_tactic" },
+  { keyword: "immediately", weight: 30, category: "pressure_tactic" },
+  { keyword: "right now", weight: 30, category: "pressure_tactic" },
+  { keyword: "act fast", weight: 35, category: "pressure_tactic" },
+  { keyword: "within 10 minutes", weight: 40, category: "pressure_tactic" },
+  { keyword: "expire", weight: 25, category: "pressure_tactic" },
 
-  // Prize/lottery scams
-  { keyword: "you have won", weight: 14, category: "lottery_scam" },
-  { keyword: "congratulations", weight: 6, category: "lottery_scam" },
-  { keyword: "prize", weight: 10, category: "lottery_scam" },
-  { keyword: "lottery", weight: 14, category: "lottery_scam" },
-  { keyword: "free", weight: 5, category: "lottery_scam" },
-
-  // Tech support scams
-  { keyword: "remote access", weight: 15, category: "tech_support_scam" },
-  { keyword: "teamviewer", weight: 14, category: "tech_support_scam" },
-  { keyword: "anydesk", weight: 14, category: "tech_support_scam" },
-  { keyword: "virus detected", weight: 13, category: "tech_support_scam" },
-  { keyword: "computer infected", weight: 13, category: "tech_support_scam" },
+  // Prize & Lottery Scams
+  { keyword: "lottery", weight: 75, category: "lottery_scam" },
+  { keyword: "you have won", weight: 75, category: "lottery_scam" },
+  { keyword: "kbc", weight: 70, category: "lottery_scam" },
+  { keyword: "prize", weight: 50, category: "lottery_scam" },
+  { keyword: "congratulations", weight: 25, category: "lottery_scam" },
 ];
 
 export interface RuleAnalysisResult {

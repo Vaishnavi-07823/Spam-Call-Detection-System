@@ -1,16 +1,13 @@
-/**
- * Monitoring Screen — Live listening UI with waveform animation.
- * Captures speech, sends to API, and navigates to Alert or Safe screen.
- */
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Mic, MicOff, Shield, Loader2 } from "lucide-react";
+import { Mic, MicOff, Shield, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { WaveformAnimation } from "@/components/WaveformAnimation";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { analyzeTranscript } from "@/services/apiService";
+import { analyzeWithRules } from "@/services/riskAnalyzer";
 
 export const Route = createFileRoute("/monitoring")({
   head: () => ({
@@ -29,6 +26,12 @@ function MonitoringPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // Live real-time keyword analysis as the user speaks
+  const liveRisk = useMemo(() => {
+    if (!transcript.trim()) return null;
+    return analyzeWithRules(transcript.trim());
+  }, [transcript]);
+
   const handleAnalyze = useCallback(async (customText?: string) => {
     const textToAnalyze = (customText || transcript).trim();
     if (!textToAnalyze) return;
@@ -40,8 +43,8 @@ function MonitoringPage() {
     try {
       const result = await analyzeTranscript(textToAnalyze);
 
-      // Navigate based on risk score threshold
-      if (result.riskScore > 70) {
+      // Navigate based on risk score threshold (>= 50 is High/Medium Threat)
+      if (result.riskScore >= 50) {
         navigate({
           to: "/alert",
           search: {
@@ -67,20 +70,20 @@ function MonitoringPage() {
     }
   }, [transcript, stopListening, navigate]);
 
-  // Auto-analyze when speech reaches 60 characters or more
+  // Auto-analyze when speech reaches 40 characters or when critical scam pattern detected
   useEffect(() => {
-    if (transcript.length >= 60 && isListening) {
+    if (isListening && liveRisk && liveRisk.ruleScore >= 60) {
       const timer = setTimeout(() => {
         handleAnalyze();
-      }, 1500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [transcript, isListening, handleAnalyze]);
+  }, [liveRisk, isListening, handleAnalyze]);
 
   const handleMicToggle = () => {
     if (isListening) {
       stopListening();
-      if (transcript.trim().length > 5) {
+      if (transcript.trim().length > 3) {
         handleAnalyze();
       }
     } else {
@@ -98,15 +101,39 @@ function MonitoringPage() {
       >
         <div className="mb-2 flex items-center gap-2">
           <Shield className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">Call Monitor</h1>
+          <h1 className="text-xl font-bold">Live Call Monitor</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          {isListening ? "Listening... speak clearly into mic" : "Tap the mic to start listening"}
+          {isListening ? "Listening & transcribing live speech..." : "Tap the mic to start listening"}
         </p>
       </motion.div>
 
+      {/* Live Threat Indicator Banner while listening */}
+      {liveRisk && transcript && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 w-full max-w-sm"
+        >
+          {liveRisk.ruleScore >= 50 ? (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-danger/15 border border-danger/40 text-danger text-xs font-semibold animate-pulse">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>
+                SUSPICIOUS CALL: Risk {liveRisk.ruleScore}% (Detected:{" "}
+                {liveRisk.matchedKeywords.map((k) => k.keyword).join(", ")})
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-medium">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>Speech captured. Normal conversation pattern.</span>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* Waveform Visualization */}
-      <div className="my-6 w-full max-w-sm">
+      <div className="my-5 w-full max-w-sm">
         <Card className="border-border/50 bg-card/50 overflow-hidden">
           <CardContent className="flex flex-col items-center gap-5 p-6">
             <WaveformAnimation isActive={isListening} />
@@ -132,22 +159,22 @@ function MonitoringPage() {
 
             <span className="text-xs font-medium text-muted-foreground">
               {isAnalyzing
-                ? "Analyzing speech for scam indicators..."
+                ? "Analyzing conversation for fraud intent..."
                 : isListening
-                  ? "Listening... Tap to stop & analyze"
-                  : "Tap to start monitoring"}
+                  ? "Speaking... Tap to stop & get instant result"
+                  : "Tap mic & speak live"}
             </span>
 
-            {/* Quick 1-Click Demo Buttons for Viva / College Demo */}
+            {/* 1-Click Demo Buttons for Viva / College */}
             {!isListening && !isAnalyzing && (
               <div className="flex w-full gap-2 pt-2 border-t border-border/40">
                 <Button
                   size="sm"
                   variant="destructive"
-                  className="flex-1 text-xs h-8"
+                  className="flex-1 text-xs h-9 font-semibold"
                   onClick={() =>
                     handleAnalyze(
-                      "Hello, this is State Bank verification department. Your credit card is blocked. Please verify your OTP and account number right now or your account will be suspended."
+                      "Hello, this is State Bank verification. Your debit card is blocked. Please share your OTP and bank account number right now or your account will be suspended immediately."
                     )
                   }
                 >
@@ -156,10 +183,10 @@ function MonitoringPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="flex-1 text-xs h-8"
+                  className="flex-1 text-xs h-9 font-medium"
                   onClick={() =>
                     handleAnalyze(
-                      "Hi Priya, I reached college on time. The lecture starts at 10 AM, let's meet at the library."
+                      "Hello Priya, I have reached college. Are we meeting in the library before the lecture starts?"
                     )
                   }
                 >
@@ -171,7 +198,7 @@ function MonitoringPage() {
         </Card>
       </div>
 
-      {/* Live Transcript */}
+      {/* Live Transcript Display */}
       {transcript && (
         <motion.div
           className="w-full max-w-sm"
@@ -182,7 +209,7 @@ function MonitoringPage() {
             <CardContent className="p-4">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-semibold tracking-wider text-muted-foreground">
-                  LIVE TRANSCRIPT
+                  LIVE TRANSCRIPTION
                 </span>
                 <button
                   onClick={resetTranscript}
@@ -191,7 +218,7 @@ function MonitoringPage() {
                   Clear
                 </button>
               </div>
-              <p className="max-h-32 overflow-y-auto text-sm leading-relaxed text-foreground">
+              <p className="max-h-32 overflow-y-auto text-sm leading-relaxed text-foreground font-medium">
                 {transcript}
               </p>
             </CardContent>
@@ -200,11 +227,11 @@ function MonitoringPage() {
           {/* Analyze Button */}
           {!isAnalyzing && (
             <Button
-              className="mt-3 w-full font-semibold h-11"
+              className="mt-3 w-full font-semibold h-11 text-sm shadow-md"
               onClick={() => handleAnalyze()}
               disabled={isAnalyzing}
             >
-              Analyze Call Now
+              Check Call for Scam (Analyze Now)
             </Button>
           )}
         </motion.div>
