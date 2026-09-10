@@ -12,6 +12,13 @@ import {
   PhoneOff,
   Volume2,
   Globe,
+  Wifi,
+  Battery,
+  User,
+  Grid,
+  Plus,
+  MessageSquare,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,75 +51,165 @@ function MonitoringPage() {
   const [callDuration, setCallDuration] = useState(0);
   const [activeTurnIndex, setActiveTurnIndex] = useState(0);
   const [conversationHistory, setConversationHistory] = useState<
-    { speaker: "Scammer" | "You"; text: string; risk: number; status: string }[]
+    { speaker: "Scammer" | "You"; speakerName: string; text: string; risk: number; status: string }[]
   >([]);
   const ringtoneCtxRef = useRef<AudioContext | null>(null);
   const simulatorTimerRef = useRef<any>(null);
 
+  // Load and cache browser voices for female vs male distinction
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    const loadVoices = () => {
+      const v = window.speechSynthesis.getVoices();
+      if (v && v.length > 0) {
+        setAvailableVoices(v);
+      }
+    };
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
+
+  // Distinct Female Voice (Pooja Sharma - Scammer / Bank Caller)
+  const femaleVoice = useMemo(() => {
+    if (!availableVoices.length) return null;
+    return (
+      availableVoices.find(
+        (v) =>
+          v.lang.toLowerCase().startsWith("hi") &&
+          /female|swara|kalpana|geeta|heera|kavya|google हिन्दी/i.test(v.name)
+      ) ||
+      availableVoices.find((v) => v.lang.toLowerCase().startsWith("hi")) ||
+      availableVoices.find(
+        (v) =>
+          v.lang.toLowerCase().includes("in") &&
+          /female|heera|neerja|priya|swara/i.test(v.name)
+      ) ||
+      availableVoices.find((v) =>
+        /female|zira|samantha|kavya|karen|victoria/i.test(v.name)
+      ) ||
+      availableVoices[0] ||
+      null
+    );
+  }, [availableVoices]);
+
+  // Distinct Male Voice (Account Holder / Victim)
+  const maleVoice = useMemo(() => {
+    if (!availableVoices.length) return null;
+    return (
+      availableVoices.find(
+        (v) =>
+          v.lang.toLowerCase().startsWith("hi") &&
+          /male|madhur|ravi|hemant|david/i.test(v.name)
+      ) ||
+      availableVoices.find(
+        (v) =>
+          v.lang.toLowerCase().includes("in") &&
+          /male|ravi|prabhat|david/i.test(v.name)
+      ) ||
+      availableVoices.find(
+        (v) =>
+          /male|david|george|mark|alex|daniel/i.test(v.name) &&
+          v.name !== femaleVoice?.name
+      ) ||
+      availableVoices.find((v) => v.name !== femaleVoice?.name) ||
+      availableVoices[0] ||
+      null
+    );
+  }, [availableVoices, femaleVoice]);
+
+  // Simulated 2-Way Turn-by-Turn Hindi Phone Conversation (Female vs Male)
   const SIMULATED_CONVERSATION = useMemo(
     () => [
       {
         speaker: "Scammer" as const,
-        hindi: "Namaste sir, main SBI Customer Care Head Office Mumbai se bol raha hoon. Kya meri baat account holder se ho rahi hai?",
-        english: "Hello sir, I am calling from SBI Customer Care Head Office Mumbai. Am I speaking with the account holder?",
+        speakerName: "Pooja Sharma (SBI Desk)",
+        gender: "female" as const,
+        role: "Caller (Bank Executive)",
+        hindi: "Namaste sir! Main State Bank of India Head Office Mumbai se Pooja Sharma bol rahi hoon. Kya meri baat account holder se ho rahi hai?",
+        english: "Hello sir! I am Pooja Sharma calling from SBI Head Office Mumbai. Am I speaking with the account holder?",
         risk: 12,
-        status: "Safe Conversation",
-        pitch: 0.9,
-        rate: 0.95,
+        status: "Safe Initial Contact",
+        pitch: 1.45,
+        rate: 1.0,
       },
       {
         speaker: "You" as const,
-        hindi: "Haan ji namaste, boliye kya kaam tha?",
-        english: "Yes hello, tell me what is the matter?",
+        speakerName: "Account Holder (You)",
+        gender: "male" as const,
+        role: "You (Target)",
+        hindi: "Haan ji namaste madam. Ji boliye, main account holder hi bol raha hoon. Kahiye kya kaam tha?",
+        english: "Yes hello madam. Yes, I am the account holder. How can I help you?",
         risk: 12,
         status: "Safe Conversation",
-        pitch: 1.25,
-        rate: 1.05,
+        pitch: 0.70,
+        rate: 0.94,
       },
       {
         speaker: "Scammer" as const,
-        hindi: "Sir, aapka SBI Global debit card pichle 2 saal se active hai na? Bank ke database update ke liye bas regular verification chal raha hai.",
+        speakerName: "Pooja Sharma (SBI Desk)",
+        gender: "female" as const,
+        role: "Caller (Bank Executive)",
+        hindi: "Sir, aapka SBI Global debit card pichle 2 saal se active hai na? Bank ke database update ke liye bas ek routine verification chal raha hai.",
         english: "Sir, your SBI Global debit card has been active for 2 years, right? This is a routine bank database update verification.",
-        risk: 22,
-        status: "Trust Building",
-        pitch: 0.9,
-        rate: 0.95,
+        risk: 24,
+        status: "Trust Building & Verification Claim",
+        pitch: 1.45,
+        rate: 1.0,
       },
       {
         speaker: "You" as const,
-        hindi: "Acha theek hai, par mere account mein koi dikkat hai kya?",
-        english: "Okay, but is there any issue with my account?",
-        risk: 22,
-        status: "Trust Building",
-        pitch: 1.25,
-        rate: 1.05,
+        speakerName: "Account Holder (You)",
+        gender: "male" as const,
+        role: "You (Target)",
+        hindi: "Acha theek hai madam, par mere account ya card mein koi dikkat hai kya?",
+        english: "Okay madam, but is there any issue with my account or card?",
+        risk: 24,
+        status: "Trust Building & Verification Claim",
+        pitch: 0.70,
+        rate: 0.94,
       },
       {
         speaker: "Scammer" as const,
-        hindi: "Ji sir! Naye RBI guidelines ke mutabik agar aaj raat 12 baje se pehle e-KYC confirm nahi hua, toh aapka khata aur UPI permanently freeze ho jayega.",
-        english: "Yes sir! Under new RBI rules, if your e-KYC is not confirmed before midnight, your account and UPI will be permanently frozen.",
-        risk: 62,
-        status: "⚠️ Suspicious Urgency & Freeze Threat",
-        pitch: 0.9,
-        rate: 0.95,
+        speakerName: "Pooja Sharma (SBI Desk)",
+        gender: "female" as const,
+        role: "Caller (Bank Executive)",
+        hindi: "Ji sir! Naye RBI guidelines ke mutabik agar aaj raat 12 baje se pehle aapka e-KYC update nahi hua, toh aapka khata aur card permanently freeze ho jayega!",
+        english: "Yes sir! Under new RBI rules, if your e-KYC is not updated before midnight, your account and debit card will be permanently frozen!",
+        risk: 65,
+        status: "⚠️ Coercive Urgency & Account Freeze Threat",
+        pitch: 1.45,
+        rate: 1.02,
       },
       {
         speaker: "You" as const,
-        hindi: "Arre par main toh kal subah bank branch jaa kar KYC karwa lunga na!",
-        english: "Oh, but I can just visit my bank branch tomorrow morning to do it!",
-        risk: 62,
-        status: "⚠️ Suspicious Urgency & Freeze Threat",
-        pitch: 1.25,
-        rate: 1.05,
+        speakerName: "Account Holder (You)",
+        gender: "male" as const,
+        role: "You (Target)",
+        hindi: "Arre madam par main toh kal subah bank branch jaa kar aaram se KYC karwa lunga na!",
+        english: "Oh madam, but I can just visit my bank branch tomorrow morning and do the KYC easily!",
+        risk: 65,
+        status: "⚠️ Coercive Urgency & Account Freeze Threat",
+        pitch: 0.70,
+        rate: 0.94,
       },
       {
         speaker: "Scammer" as const,
-        hindi: "Nahi sir! Kal tak der ho jayegi, server lock ho jayega! Hum direct online unblock kar rahe hain. Maine aapke registered mobile par 6-digit code bheja hai, turant apna OTP aur account number bataiye warna police complaint hogi aur account block!",
-        english: "No sir! Tomorrow will be too late! We are unblocking online right now. I have sent a 6-digit code to your phone, share your OTP immediately or face police action and account blockage!",
+        speakerName: "Pooja Sharma (SBI Desk)",
+        gender: "female" as const,
+        role: "Caller (Bank Executive)",
+        hindi: "Nahi sir! Kal tak der ho jayegi, server lock ho jayega! Hum direct online unblock kar rahe hain. Maine aapke phone par 6-digit OTP bheja hai, turant apna OTP aur PIN batayein warna police complaint hogi aur khata band!",
+        english: "No sir! Tomorrow will be too late! We are unblocking online right now. I sent a 6-digit OTP to your mobile, share your OTP immediately or face police action and account closure!",
         risk: 95,
-        status: "🚨 DANGER: FATAL SCAM DETECTED",
-        pitch: 0.9,
-        rate: 0.95,
+        status: "🚨 CRITICAL: OTP Extortion & Police Threat",
+        pitch: 1.45,
+        rate: 1.04,
       },
     ],
     []
@@ -262,7 +359,7 @@ function MonitoringPage() {
       if (index >= SIMULATED_CONVERSATION.length) {
         // Final scam line completed — trigger alert
         const fullTranscript = SIMULATED_CONVERSATION.map(
-          (t) => `${t.speaker}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`
+          (t) => `${t.speakerName}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`
         ).join("\n");
 
         closeSimulator();
@@ -278,6 +375,7 @@ function MonitoringPage() {
         ...prev,
         {
           speaker: turn.speaker,
+          speakerName: turn.speakerName,
           text: textToSpeak,
           risk: turn.risk,
           status: turn.status,
@@ -287,14 +385,22 @@ function MonitoringPage() {
       if (typeof window !== "undefined" && window.speechSynthesis) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = selectedLang;
+        utterance.lang = selectedLang === "hi-IN" ? "hi-IN" : "en-IN";
+
+        // Assign distinct female vs male voices
+        if (turn.gender === "female" && femaleVoice) {
+          utterance.voice = femaleVoice;
+        } else if (turn.gender === "male" && maleVoice) {
+          utterance.voice = maleVoice;
+        }
+
         utterance.pitch = turn.pitch;
         utterance.rate = turn.rate;
 
         utterance.onend = () => {
           simulatorTimerRef.current = setTimeout(() => {
             playTurn(index + 1);
-          }, 1200);
+          }, 1100);
         };
 
         utterance.onerror = () => {
@@ -310,7 +416,7 @@ function MonitoringPage() {
         }, 3000);
       }
     },
-    [SIMULATED_CONVERSATION, selectedLang, handleAnalyze]
+    [SIMULATED_CONVERSATION, selectedLang, femaleVoice, maleVoice, handleAnalyze]
   );
 
   /** Accept simulated call — starts 2-way natural conversation */
@@ -658,152 +764,252 @@ function MonitoringPage() {
         </div>
       </div>
 
-      {/* 2-Way Live Phone Call Simulator Smartphone Frame Modal */}
+      {/* 2-Way Live Phone Call Simulator Hyper-Realistic Smartphone Modal */}
       <AnimatePresence>
         {isSimulatorOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-lg p-3 sm:p-4"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.88, y: 30 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="w-full max-w-sm rounded-[36px] bg-slate-950 border-4 border-slate-700/80 p-5 flex flex-col items-center shadow-[0_0_50px_rgba(0,0,0,0.8)] text-white max-h-[90vh] overflow-y-auto relative"
+              exit={{ scale: 0.88, y: 30 }}
+              className="w-full max-w-[370px] rounded-[48px] bg-slate-950 border-[6px] border-slate-800 p-5 flex flex-col items-center shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-white max-h-[92vh] overflow-y-auto relative select-none ring-1 ring-white/10"
             >
-              {/* Smartphone Dynamic Island Notch */}
-              <div className="w-28 h-5 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-slate-950 border border-slate-800 mr-2" />
-                <div className="w-10 h-1 bg-slate-800 rounded-full" />
+              {/* Smartphone Status Bar (Time, Dynamic Island, Signals) */}
+              <div className="w-full flex items-center justify-between px-2 pt-1 pb-2">
+                <span className="text-[12px] font-bold text-slate-300 font-mono">9:41</span>
+                {/* Dynamic Island Notch */}
+                <div className="w-24 h-5 rounded-full bg-black border border-slate-800 flex items-center justify-center px-2">
+                  <div className="w-2 h-2 rounded-full bg-slate-900 mr-2" />
+                  <div className="w-8 h-1 bg-slate-900 rounded-full" />
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-300">
+                  <span className="text-[10px] font-bold">5G</span>
+                  <Wifi className="h-3.5 w-3.5" />
+                  <Battery className="h-3.5 w-3.5 text-emerald-400" />
+                </div>
               </div>
 
               {callState === "ringing" ? (
-                /* Ringing Screen */
-                <div className="flex flex-col items-center text-center w-full py-4">
+                /* Hyper-Realistic Incoming Call Screen */
+                <div className="flex flex-col items-center text-center w-full py-5">
+                  <span className="text-[11px] font-bold tracking-widest uppercase text-slate-400 mb-6">
+                    INCOMING CELLULAR CALL...
+                  </span>
+
+                  {/* Caller Photo Avatar with Ringing Pulse */}
                   <div className="relative mb-5">
-                    <div className="w-24 h-24 rounded-full bg-red-500/20 flex items-center justify-center animate-ping absolute inset-0" />
-                    <div className="w-24 h-24 rounded-full bg-slate-900 border-2 border-red-500/60 flex items-center justify-center relative shadow-lg">
-                      <Phone className="h-10 w-10 text-red-400 animate-bounce" />
+                    <div className="w-28 h-28 rounded-full bg-red-500/20 flex items-center justify-center animate-ping absolute inset-0" />
+                    <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-pink-600 via-purple-600 to-indigo-600 p-1 flex items-center justify-center shadow-2xl relative">
+                      <div className="w-full h-full rounded-full bg-slate-900 flex flex-col items-center justify-center text-center">
+                        <span className="text-2xl">👩‍💼</span>
+                        <span className="text-[9px] font-bold text-pink-400 uppercase tracking-tight mt-0.5">
+                          SBI DESK
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-red-400 mb-1">
-                    Incoming Call...
-                  </span>
-                  <h3 className="text-xl font-extrabold tracking-tight">+91 98112-78401</h3>
-                  <p className="text-xs text-slate-400 mt-1 mb-8">
-                    Suspected: SBI Fraud & Relationship Office
+                  {/* Caller Information */}
+                  <h2 className="text-2xl font-black tracking-tight text-white">
+                    SBI Customer Care
+                  </h2>
+                  <p className="text-xs font-semibold text-pink-300 mt-0.5">
+                    Pooja Sharma · Mumbai Head Office
+                  </p>
+                  <p className="text-xs text-slate-400 font-mono mt-1">
+                    +91 98112-78401
                   </p>
 
-                  <div className="flex w-full justify-around items-center px-6">
-                    <div className="flex flex-col items-center gap-1.5">
+                  <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-[10px] font-bold">
+                    <AlertTriangle className="h-3 w-3" />
+                    <span>Suspected Bank Telemarketing / Impersonation</span>
+                  </div>
+
+                  {/* Quick Options Bar (Remind Me / Message) */}
+                  <div className="flex w-full justify-around items-center px-8 mt-10 mb-8 text-slate-400">
+                    <button
+                      onClick={closeSimulator}
+                      className="flex flex-col items-center gap-1 hover:text-white transition-colors"
+                    >
+                      <Clock className="h-4 w-4" />
+                      <span className="text-[10px]">Remind Me</span>
+                    </button>
+                    <button
+                      onClick={closeSimulator}
+                      className="flex flex-col items-center gap-1 hover:text-white transition-colors"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span className="text-[10px]">Message</span>
+                    </button>
+                  </div>
+
+                  {/* Accept / Decline Buttons (Real Smartphone Style) */}
+                  <div className="flex w-full justify-around items-center px-4">
+                    <div className="flex flex-col items-center gap-2">
                       <button
                         onClick={closeSimulator}
-                        className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg transition-transform active:scale-95"
+                        className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg shadow-red-600/40 transition-transform active:scale-95"
                       >
-                        <PhoneOff className="h-6 w-6 text-white" />
+                        <PhoneOff className="h-7 w-7 text-white" />
                       </button>
-                      <span className="text-xs text-slate-300">Decline</span>
+                      <span className="text-xs font-semibold text-slate-300">Decline</span>
                     </div>
 
-                    <div className="flex flex-col items-center gap-1.5">
+                    <div className="flex flex-col items-center gap-2">
                       <button
                         onClick={handleAcceptSimulatedCall}
-                        className="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center shadow-lg transition-transform active:scale-95 animate-pulse"
+                        className="w-16 h-16 rounded-full bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-600/40 transition-transform active:scale-95 animate-pulse"
                       >
-                        <Phone className="h-6 w-6 text-white" />
+                        <Phone className="h-7 w-7 text-white" />
                       </button>
-                      <span className="text-xs text-emerald-300 font-semibold">Accept</span>
+                      <span className="text-xs font-bold text-emerald-400">Accept</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                /* In-Call Active 2-Way Stream */
-                <div className="w-full flex flex-col items-center">
-                  {/* Call Header */}
-                  <div className="flex items-center justify-between w-full border-b border-slate-800 pb-3 mb-3">
-                    <div className="text-left">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-xs font-bold text-slate-200">Call Connected</span>
-                      </div>
-                      <p className="text-[11px] text-slate-400">
-                        SBI Relationship Desk • 00:0{callDuration}
-                      </p>
-                    </div>
-
-                    {/* Live Threat Badge */}
-                    <div
-                      className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                        currentTurn.risk >= 70
-                          ? "bg-red-500/20 text-red-400 border-red-500/50 animate-pulse"
-                          : currentTurn.risk >= 40
-                            ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
-                            : "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
-                      }`}
-                    >
-                      Threat: {currentTurn.risk}%
-                    </div>
-                  </div>
-
-                  {/* 2-Way Turn-by-Turn Dialogue Stream */}
-                  <div className="w-full space-y-2.5 max-h-60 overflow-y-auto pr-1 my-2">
-                    {conversationHistory.map((msg, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex flex-col ${
-                          msg.speaker === "Scammer" ? "items-start" : "items-end"
-                        }`}
-                      >
-                        <span className="text-[10px] text-slate-400 mb-0.5 px-1">
-                          {msg.speaker === "Scammer" ? "🕵️ Caller (Bank Impersonator)" : "👤 You"}
-                        </span>
-                        <div
-                          className={`p-2.5 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
-                            msg.speaker === "Scammer"
-                              ? "bg-slate-900 text-slate-100 rounded-tl-none border border-slate-800"
-                              : "bg-primary/25 text-white rounded-tr-none border border-primary/40"
-                          }`}
-                        >
-                          {msg.text}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Current Speaking Indicator */}
-                  <div className="w-full py-2 px-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs mt-2">
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <Volume2 className="h-4 w-4 text-primary animate-pulse" />
-                      <span className="text-[11px] font-medium">
-                        {currentTurn.speaker === "Scammer"
-                          ? "Caller speaking..."
-                          : "You speaking..."}
+                /* Hyper-Realistic Connected Call Screen */
+                <div className="w-full flex flex-col items-center pt-2">
+                  {/* Top Caller Header & Timer */}
+                  <div className="flex flex-col items-center text-center w-full mb-3">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                        CALL CONNECTED (HINDI)
                       </span>
                     </div>
-                    <span className="text-[10px] text-slate-400">{currentTurn.status}</span>
+                    <h3 className="text-lg font-black text-white">
+                      SBI Customer Care (Pooja Sharma)
+                    </h3>
+                    <p className="text-xs text-slate-400 font-mono">
+                      {String(Math.floor(callDuration / 60)).padStart(2, "0")}:
+                      {String(callDuration % 60).padStart(2, "0")}
+                    </p>
+
+                    {/* Live Threat Escalation Badge */}
+                    <div className="mt-2">
+                      <span
+                        className={`text-[10px] font-extrabold px-3 py-1 rounded-full border shadow-sm ${
+                          currentTurn.risk >= 70
+                            ? "bg-red-500/25 text-red-300 border-red-500/60 animate-pulse"
+                            : currentTurn.risk >= 40
+                              ? "bg-amber-500/25 text-amber-300 border-amber-500/60"
+                              : "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
+                        }`}
+                      >
+                        {currentTurn.risk >= 70
+                          ? `🚨 CRITICAL SCAM RISK: ${currentTurn.risk}%`
+                          : currentTurn.risk >= 40
+                            ? `⚠️ SUSPICIOUS URGENCY: ${currentTurn.risk}%`
+                            : `🛡️ SCANNING CONVERSATION: ${currentTurn.risk}%`}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Simulator Controls */}
+                  {/* Real Mobile 6-Keypad Function Grid */}
+                  <div className="grid grid-cols-3 gap-2.5 w-full px-2 py-2 mb-2 bg-slate-900/60 rounded-2xl border border-slate-800/80">
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 text-slate-400 text-[10px]">
+                      <MicOff className="h-4 w-4 mb-1 text-slate-300" />
+                      <span>Mute</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 text-slate-400 text-[10px]">
+                      <Grid className="h-4 w-4 mb-1 text-slate-300" />
+                      <span>Keypad</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-primary/20 border border-primary/40 text-primary text-[10px] font-bold">
+                      <Volume2 className="h-4 w-4 mb-1 text-primary animate-pulse" />
+                      <span>Speaker</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 text-slate-400 text-[10px]">
+                      <Plus className="h-4 w-4 mb-1 text-slate-300" />
+                      <span>Add Call</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/50 text-slate-400 text-[10px]">
+                      <User className="h-4 w-4 mb-1 text-slate-300" />
+                      <span>Contacts</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold">
+                      <Shield className="h-4 w-4 mb-1 text-emerald-400 animate-pulse" />
+                      <span>AI Active</span>
+                    </div>
+                  </div>
+
+                  {/* 2-Way Turn-by-Turn Natural Hindi Dialogue Stream */}
+                  <div className="w-full space-y-2.5 max-h-52 overflow-y-auto pr-1 my-2">
+                    {conversationHistory.map((msg, idx) => {
+                      const isScammer = msg.speaker === "Scammer";
+                      return (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`flex flex-col ${
+                            isScammer ? "items-start" : "items-end"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1 mb-0.5 px-1">
+                            <span className="text-[10px] font-bold">
+                              {isScammer ? "👩 Pooja Sharma (SBI Caller)" : "👨 You (Account Holder)"}
+                            </span>
+                            <span
+                              className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
+                                isScammer
+                                  ? "bg-pink-500/20 text-pink-300"
+                                  : "bg-blue-500/20 text-blue-300"
+                              }`}
+                            >
+                              {isScammer ? "Female Voice" : "Male Voice"}
+                            </span>
+                          </div>
+                          <div
+                            className={`p-2.5 rounded-2xl text-xs max-w-[88%] leading-relaxed ${
+                              isScammer
+                                ? "bg-pink-950/40 text-pink-50 rounded-tl-none border border-pink-500/40 shadow-sm"
+                                : "bg-blue-950/50 text-blue-50 rounded-tr-none border border-blue-500/40 shadow-sm"
+                            }`}
+                          >
+                            {msg.text}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Live Speaker Telemetry Indicator */}
+                  <div className="w-full py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs mt-1">
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Volume2 className="h-4 w-4 text-primary animate-pulse" />
+                      <span className="text-[11px] font-bold">
+                        {currentTurn.speaker === "Scammer"
+                          ? "👩 Pooja speaking (Female Voice)..."
+                          : "👨 You speaking (Male Voice)..."}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {currentTurn.status}
+                    </span>
+                  </div>
+
+                  {/* Active In-Call End Button & Fast Forward */}
                   <div className="flex items-center justify-between w-full pt-4 mt-2 border-t border-slate-800">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs h-9 border-amber-500/50 text-amber-300 hover:bg-amber-500/10"
+                      className="text-xs h-9 border-amber-500/60 text-amber-300 hover:bg-amber-500/10 font-bold"
                       onClick={handleSkipToScam}
                     >
-                      ⚡ Fast Forward (Scam Alert)
+                      ⚡ Fast Forward to Threat
                     </Button>
 
                     <button
                       onClick={closeSimulator}
-                      className="w-10 h-10 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg transition-transform active:scale-95"
+                      className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg shadow-red-600/50 transition-transform active:scale-95"
                     >
-                      <PhoneOff className="h-5 w-5 text-white" />
+                      <PhoneOff className="h-6 w-6 text-white" />
                     </button>
                   </div>
                 </div>
