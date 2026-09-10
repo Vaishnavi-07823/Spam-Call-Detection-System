@@ -19,6 +19,8 @@ import {
   Plus,
   MessageSquare,
   Clock,
+  PhoneCall,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -238,6 +240,25 @@ function MonitoringPage() {
     ],
     []
   );
+
+  // Active simulated dialogue turn
+  const currentTurn = useMemo(() => {
+    return (
+      SIMULATED_CONVERSATION[activeTurnIndex] ||
+      SIMULATED_CONVERSATION[0] || {
+        speaker: "Scammer",
+        speakerName: "Caller",
+        gender: "male",
+        role: "Caller",
+        hindi: "",
+        english: "",
+        risk: 10,
+        status: "Call Active",
+        pitch: 1.0,
+        rate: 1.0,
+      }
+    );
+  }, [SIMULATED_CONVERSATION, activeTurnIndex]);
 
   // Sync language selection
   const handleLanguageChange = (newLang: "en-IN" | "hi-IN") => {
@@ -654,8 +675,6 @@ function MonitoringPage() {
     }
     return () => clearInterval(interval);
   }, [callState]);
-
-  const currentTurn = SIMULATED_CONVERSATION[activeTurnIndex] || SIMULATED_CONVERSATION[0];
 
   return (
     <div className="flex min-h-screen flex-col items-center px-4 sm:px-6 pb-24 pt-6 max-w-5xl mx-auto w-full">
