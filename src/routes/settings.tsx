@@ -76,11 +76,16 @@ function SettingsPage() {
   const [vibration, setVibration] = useState(true);
 
   return (
-    <div className="flex min-h-screen flex-col px-6 pb-24 pt-8">
+    <div className="flex min-h-screen flex-col px-4 sm:px-6 pb-24 pt-6 max-w-5xl mx-auto w-full">
       {/* Header */}
-      <div className="mb-6 flex items-center gap-2">
-        <Settings className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-bold">Settings</h1>
+      <div className="mb-6 flex items-center gap-3 pb-4 border-b border-border/40">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+          <Settings className="h-6 w-6" />
+        </div>
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight">System Preferences</h1>
+          <p className="text-xs text-muted-foreground">Configure defense thresholds, neural alerts & telemetry options</p>
+        </div>
       </div>
 
       {/* Account */}

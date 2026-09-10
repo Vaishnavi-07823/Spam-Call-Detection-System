@@ -104,14 +104,36 @@ function RootComponent() {
 
   return (
     <AuthGuard>
-      <div className="mx-auto max-w-lg min-h-screen relative">
-        <div className="fixed top-4 right-4 z-50">
-          <ThemeToggle />
-        </div>
-        <Outlet />
+      <div className="min-h-screen bg-background text-foreground relative selection:bg-primary/30">
+        {/* Top Floating Header for desktop & mobile */}
+        <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center shadow-[0_0_12px_rgba(59,130,246,0.35)]">
+                <span className="text-base">🛡️</span>
+              </div>
+              <span className="font-extrabold tracking-tight text-base sm:text-lg">
+                Vox<span className="text-primary">Shield</span> <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 font-bold ml-1">AI</span>
+              </span>
+            </Link>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live Shield Active
+              </div>
+              <ThemeToggle />
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="max-w-5xl mx-auto pb-24">
+          <Outlet />
+        </main>
+
         <BottomNav />
       </div>
     </AuthGuard>
   );
-
 }

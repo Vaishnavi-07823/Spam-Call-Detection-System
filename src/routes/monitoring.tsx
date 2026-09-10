@@ -348,25 +348,33 @@ function MonitoringPage() {
   const currentTurn = SIMULATED_CONVERSATION[activeTurnIndex] || SIMULATED_CONVERSATION[0];
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-6 pb-24 pt-8">
-      {/* Header */}
+    <div className="flex min-h-screen flex-col items-center px-4 sm:px-6 pb-24 pt-6 max-w-5xl mx-auto w-full">
+      {/* Top Header & Status Telemetry */}
       <motion.div
-        className="flex flex-col items-center text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-border/40"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <div className="mb-2 flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">Live Call Monitor</h1>
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+            <Shield className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-extrabold tracking-tight">Live Interception Deck</h1>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                Active Radar
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Dual-engine ambient speech decoding & conversational fraud detection
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {isListening
-            ? "Listening & transcribing in real time..."
-            : "Tap mic to listen or simulate an incoming call"}
-        </p>
 
-        {/* Language Selector */}
-        <div className="flex items-center gap-1.5 mt-3 p-1 rounded-full bg-card/80 border border-border/60">
+        {/* Language Mode Selector */}
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-card/80 border border-border/60 shadow-sm backdrop-blur-sm">
           <Globe className="h-3.5 w-3.5 text-muted-foreground ml-2" />
           <button
             onClick={() => handleLanguageChange("en-IN")}
@@ -391,152 +399,266 @@ function MonitoringPage() {
         </div>
       </motion.div>
 
-      {/* Live Threat Indicator Banner while listening */}
-      {liveRisk && transcript && (
-        <motion.div
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-4 w-full max-w-sm"
-        >
-          {liveRisk.ruleScore >= 50 ? (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-danger/15 border border-danger/40 text-danger text-xs font-semibold animate-pulse">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>
-                SUSPICIOUS CALL: Threat {liveRisk.ruleScore}% (Detected:{" "}
-                {liveRisk.matchedKeywords.map((k) => k.keyword).join(", ")})
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-medium">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>Normal conversation detected so far.</span>
-            </div>
-          )}
-        </motion.div>
-      )}
-
-      {/* Waveform Visualization */}
-      <div className="my-5 w-full max-w-sm">
-        <Card className="border-border/50 bg-card/50 overflow-hidden">
-          <CardContent className="flex flex-col items-center gap-5 p-6">
-            <WaveformAnimation isActive={isListening} />
-
-            {/* Mic Toggle Button */}
-            <motion.div whileTap={{ scale: 0.95 }}>
-              <Button
-                size="lg"
-                variant={isListening ? "destructive" : "default"}
-                className="h-16 w-16 rounded-full p-0 shadow-lg"
-                onClick={handleMicToggle}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? (
-                  <Loader2 className="h-7 w-7 animate-spin" />
-                ) : isListening ? (
-                  <MicOff className="h-7 w-7" />
-                ) : (
-                  <Mic className="h-7 w-7" />
-                )}
-              </Button>
-            </motion.div>
-
-            <span className="text-xs font-medium text-muted-foreground text-center">
-              {isAnalyzing
-                ? "Analyzing conversation with Dual-Engine AI..."
-                : isListening
-                  ? "Speaking... Tap to stop & get instant alert"
-                  : "Tap mic to speak or run 2-way call simulator"}
-            </span>
-
-            {/* Incoming Call Simulator Trigger (Showstopper for College Demo) */}
-            <div className="w-full pt-2 border-t border-border/40">
-              <Button
-                variant="outline"
-                className="w-full text-xs h-11 font-bold border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary gap-2 shadow-sm"
-                onClick={openSimulator}
-              >
-                <Phone className="h-4 w-4" />
-                📞 Start 2-Way Realistic Call Simulator
-              </Button>
-            </div>
-
-            {/* Quick 1-Click Demo Buttons */}
-            {!isListening && !isAnalyzing && (
-              <div className="flex w-full gap-2 pt-1">
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="flex-1 text-xs h-9 font-semibold"
-                  onClick={() =>
-                    handleAnalyze(
-                      selectedLang === "hi-IN"
-                        ? "Namaste, SBI bank se bol rahe hain. Aapka khata block ho chuka hai. Turant apna OTP aur password bataiye warna police complaint hogi."
-                        : "Hello, this is State Bank verification. Your debit card is blocked. Please share your OTP and bank account number right now or your account will be suspended immediately."
-                    )
-                  }
-                >
-                  ⚡ Fast Scam Alert
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 text-xs h-9 font-medium"
-                  onClick={() =>
-                    handleAnalyze(
-                      selectedLang === "hi-IN"
-                        ? "Haan bhai main college pahuch gaya hoon. Class 10 baje shuru hogi, canteen mein milte hain."
-                        : "Hello Priya, I have reached college. Are we meeting in the library before the lecture starts?"
-                    )
-                  }
-                >
-                  ✅ Fast Safe Demo
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Live Transcript Display */}
-      {transcript && (
-        <motion.div
-          className="w-full max-w-sm"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Card className="border-border/50 bg-card/50">
-            <CardContent className="p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold tracking-wider text-muted-foreground">
-                  LIVE TRANSCRIPTION ({selectedLang})
+      {/* Main Dual-Panel Command Grid */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+        {/* Left Column: Interception Engine & Mic Controls (5 Cols) */}
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-md overflow-hidden shadow-lg relative">
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-cyan-400 to-primary/40" />
+            <CardContent className="flex flex-col items-center gap-5 p-6">
+              <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
+                <span className="font-semibold uppercase tracking-wider text-[10px]">
+                  ACOUSTIC SENSOR
                 </span>
-                <button
-                  onClick={resetTranscript}
-                  className="text-xs text-primary hover:underline"
-                >
-                  Clear
-                </button>
+                <span className="font-mono text-[11px] text-primary">
+                  {isListening ? "SAMPLING 48kHz" : "STANDBY"}
+                </span>
               </div>
-              <p className="max-h-32 overflow-y-auto text-sm leading-relaxed text-foreground font-medium">
-                {transcript}
-              </p>
+
+              {/* Waveform Visualization */}
+              <div className="w-full py-2 flex justify-center">
+                <WaveformAnimation isActive={isListening} />
+              </div>
+
+              {/* Mic Toggle Button */}
+              <motion.div whileTap={{ scale: 0.95 }} className="relative">
+                {isListening && (
+                  <div className="absolute -inset-3 rounded-full bg-red-500/20 animate-ping" />
+                )}
+                <Button
+                  size="lg"
+                  variant={isListening ? "destructive" : "default"}
+                  className={`h-20 w-20 rounded-full p-0 shadow-2xl transition-all duration-300 ${
+                    isListening
+                      ? "ring-4 ring-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.5)]"
+                      : "shadow-[0_0_25px_rgba(59,130,246,0.35)] hover:scale-105"
+                  }`}
+                  onClick={handleMicToggle}
+                  disabled={isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  ) : isListening ? (
+                    <MicOff className="h-8 w-8" />
+                  ) : (
+                    <Mic className="h-8 w-8" />
+                  )}
+                </Button>
+              </motion.div>
+
+              <div className="text-center">
+                <p className="text-xs font-semibold text-foreground">
+                  {isAnalyzing
+                    ? "Deep Neural Fraud Analysis..."
+                    : isListening
+                      ? "Interception Active — Listening..."
+                      : "Click Mic to Begin Interception"}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {isListening
+                    ? "Speak normally or simulate caller speech"
+                    : "Or simulate a realistic phone call below"}
+                </p>
+              </div>
+
+              {/* Showstopper: Realistic 2-Way Simulator Button */}
+              <div className="w-full pt-3 border-t border-border/40">
+                <Button
+                  variant="outline"
+                  className="w-full text-xs h-12 font-bold border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 gap-2 shadow-sm transition-all hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                  onClick={openSimulator}
+                >
+                  <Phone className="h-4 w-4 animate-bounce" />
+                  📞 Launch 2-Way Realistic Call Simulator
+                </Button>
+              </div>
+
+              {/* Fast 1-Click Evaluator Triggers */}
+              {!isListening && !isAnalyzing && (
+                <div className="w-full space-y-1.5 pt-1">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block text-center">
+                    Quick Evaluator Demos
+                  </span>
+                  <div className="flex w-full gap-2">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="flex-1 text-[11px] h-9 font-semibold"
+                      onClick={() =>
+                        handleAnalyze(
+                          selectedLang === "hi-IN"
+                            ? "Namaste, SBI bank se bol rahe hain. Aapka khata block ho chuka hai. Turant apna OTP aur password bataiye warna police complaint hogi."
+                            : "Hello, this is State Bank verification. Your debit card is blocked. Please share your OTP and bank account number right now or your account will be suspended immediately."
+                        )
+                      }
+                    >
+                      ⚡ Fast Scam Alert
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-[11px] h-9 font-medium border-border/70"
+                      onClick={() =>
+                        handleAnalyze(
+                          selectedLang === "hi-IN"
+                            ? "Haan bhai main college pahuch gaya hoon. Class 10 baje shuru hogi, canteen mein milte hain."
+                            : "Hello Priya, I have reached college. Are we meeting in the library before the lecture starts?"
+                        )
+                      }
+                    >
+                      ✅ Fast Safe Demo
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
+        </div>
 
-          {/* Analyze Button */}
-          {!isAnalyzing && (
-            <Button
-              className="mt-3 w-full font-semibold h-11 text-sm shadow-md"
-              onClick={() => handleAnalyze()}
-              disabled={isAnalyzing}
-            >
-              Check Call for Scam (Analyze Now)
-            </Button>
-          )}
-        </motion.div>
-      )}
+        {/* Right Column: Real-Time Forensic Intelligence Hub (7 Cols) */}
+        <div className="lg:col-span-7 flex flex-col gap-4">
+          {/* Live Threat Telemetry Meter */}
+          <Card className="border-border/50 bg-card/50 backdrop-blur-md p-5 shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Live Threat Probability
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-card border border-border/60 text-muted-foreground">
+                  Dual-Engine Radar
+                </span>
+              </div>
+              <span
+                className={`text-sm font-extrabold ${
+                  liveRisk && liveRisk.ruleScore >= 50
+                    ? "text-red-400"
+                    : liveRisk && liveRisk.ruleScore > 0
+                      ? "text-amber-400"
+                      : "text-emerald-400"
+                }`}
+              >
+                {liveRisk ? `${liveRisk.ruleScore}% Risk` : "0% (Neutral)"}
+              </span>
+            </div>
 
-      {/* 2-Way Live Phone Call Simulator Modal */}
+            {/* Dynamic Progress Meter */}
+            <div className="w-full h-3 bg-muted/40 rounded-full overflow-hidden p-0.5 border border-border/50">
+              <motion.div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  liveRisk && liveRisk.ruleScore >= 50
+                    ? "bg-gradient-to-r from-amber-500 to-red-500"
+                    : liveRisk && liveRisk.ruleScore > 0
+                      ? "bg-gradient-to-r from-emerald-500 to-amber-500"
+                      : "bg-emerald-500"
+                }`}
+                style={{ width: `${Math.max(5, liveRisk ? liveRisk.ruleScore : 5)}%` }}
+              />
+            </div>
+
+            {/* Status Banner */}
+            <div className="mt-3">
+              {liveRisk && liveRisk.ruleScore >= 50 ? (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs font-semibold animate-pulse">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
+                  <span>CRITICAL THREAT: Conversational coercion & credential harvesting detected!</span>
+                </div>
+              ) : liveRisk && liveRisk.ruleScore > 0 ? (
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
+                  <span>Elevated suspicion: monitoring subsequent statements for urgent requests...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>Acoustic baseline clear — no coercive threat vectors matched.</span>
+                </div>
+              )}
+            </div>
+
+            {/* Matched Keywords Radar Chips */}
+            {liveRisk && liveRisk.matchedKeywords.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-border/40">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                  Extracted Threat Vectors ({liveRisk.matchedKeywords.length}):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {liveRisk.matchedKeywords.map((k, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-red-500/15 border border-red-500/40 text-red-300 flex items-center gap-1"
+                    >
+                      <span>{k.keyword}</span>
+                      <span className="text-[9px] text-red-400/80">+{k.weight}pts</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Live Decrypted Speech Stream Terminal */}
+          <Card className="flex-1 border-border/50 bg-card/40 backdrop-blur-md p-5 flex flex-col justify-between shadow-lg">
+            <div>
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/40">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Live Decrypted Stream ({selectedLang})
+                  </span>
+                </div>
+                {transcript && (
+                  <button
+                    onClick={resetTranscript}
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    Clear Stream
+                  </button>
+                )}
+              </div>
+
+              {transcript ? (
+                <div className="font-mono text-xs sm:text-sm leading-relaxed p-3.5 rounded-xl bg-slate-950/60 border border-border/40 text-foreground max-h-56 overflow-y-auto">
+                  <p className="whitespace-pre-wrap">{transcript}</p>
+                </div>
+              ) : (
+                <div className="py-12 flex flex-col items-center justify-center text-center text-muted-foreground font-mono text-xs border border-dashed border-border/50 rounded-xl bg-card/20">
+                  <Mic className="h-6 w-6 text-muted-foreground/40 mb-2" />
+                  <p>Stream buffer empty</p>
+                  <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                    Speech captured via microphone or simulator will stream here in real time
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Analysis Trigger Action */}
+            <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-3">
+              <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                Engine: Gemini 1.5 Flash + Rule-Based Heuristic
+              </span>
+              <Button
+                className="w-full sm:w-auto font-bold text-xs h-10 px-5 shadow-md ml-auto"
+                onClick={() => handleAnalyze()}
+                disabled={isAnalyzing || !transcript.trim()}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" />
+                    Analyzing Threat...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="h-3.5 w-3.5 mr-2" />
+                    Deep Analyze Threat
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* 2-Way Live Phone Call Simulator Smartphone Frame Modal */}
       <AnimatePresence>
         {isSimulatorOpen && (
           <motion.div
@@ -549,22 +671,28 @@ function MonitoringPage() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-700 p-5 flex flex-col items-center shadow-2xl text-white max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-sm rounded-[36px] bg-slate-950 border-4 border-slate-700/80 p-5 flex flex-col items-center shadow-[0_0_50px_rgba(0,0,0,0.8)] text-white max-h-[90vh] overflow-y-auto relative"
             >
+              {/* Smartphone Dynamic Island Notch */}
+              <div className="w-28 h-5 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-950 border border-slate-800 mr-2" />
+                <div className="w-10 h-1 bg-slate-800 rounded-full" />
+              </div>
+
               {callState === "ringing" ? (
                 /* Ringing Screen */
-                <div className="flex flex-col items-center text-center w-full py-6">
-                  <div className="relative mb-6">
+                <div className="flex flex-col items-center text-center w-full py-4">
+                  <div className="relative mb-5">
                     <div className="w-24 h-24 rounded-full bg-red-500/20 flex items-center justify-center animate-ping absolute inset-0" />
-                    <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-red-500/60 flex items-center justify-center relative">
+                    <div className="w-24 h-24 rounded-full bg-slate-900 border-2 border-red-500/60 flex items-center justify-center relative shadow-lg">
                       <Phone className="h-10 w-10 text-red-400 animate-bounce" />
                     </div>
                   </div>
 
-                  <span className="text-xs font-semibold uppercase tracking-widest text-red-400 mb-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-red-400 mb-1">
                     Incoming Call...
                   </span>
-                  <h3 className="text-xl font-bold">+91 98112-78401</h3>
+                  <h3 className="text-xl font-extrabold tracking-tight">+91 98112-78401</h3>
                   <p className="text-xs text-slate-400 mt-1 mb-8">
                     Suspected: SBI Fraud & Relationship Office
                   </p>
@@ -608,7 +736,7 @@ function MonitoringPage() {
 
                     {/* Live Threat Badge */}
                     <div
-                      className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
                         currentTurn.risk >= 70
                           ? "bg-red-500/20 text-red-400 border-red-500/50 animate-pulse"
                           : currentTurn.risk >= 40
@@ -632,12 +760,12 @@ function MonitoringPage() {
                         }`}
                       >
                         <span className="text-[10px] text-slate-400 mb-0.5 px-1">
-                          {msg.speaker === "Scammer" ? "🕵️ Caller (Bank)" : "👤 You"}
+                          {msg.speaker === "Scammer" ? "🕵️ Caller (Bank Impersonator)" : "👤 You"}
                         </span>
                         <div
                           className={`p-2.5 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
                             msg.speaker === "Scammer"
-                              ? "bg-slate-800 text-slate-100 rounded-tl-none border border-slate-700"
+                              ? "bg-slate-900 text-slate-100 rounded-tl-none border border-slate-800"
                               : "bg-primary/25 text-white rounded-tr-none border border-primary/40"
                           }`}
                         >
@@ -648,7 +776,7 @@ function MonitoringPage() {
                   </div>
 
                   {/* Current Speaking Indicator */}
-                  <div className="w-full py-2 px-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between text-xs mt-2">
+                  <div className="w-full py-2 px-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs mt-2">
                     <div className="flex items-center gap-2 text-slate-300">
                       <Volume2 className="h-4 w-4 text-primary animate-pulse" />
                       <span className="text-[11px] font-medium">

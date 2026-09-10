@@ -161,219 +161,297 @@ function UploadPage() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-6 pb-24 pt-8">
-      {/* Header */}
+    <div className="flex min-h-screen flex-col items-center px-4 sm:px-6 pb-24 pt-6 max-w-5xl mx-auto w-full">
+      {/* Top Header */}
       <motion.div
-        className="flex flex-col items-center text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-border/40"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <div className="mb-2 flex items-center gap-2">
-          <FileAudio className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">Upload Recording</h1>
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+            <FileAudio className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-extrabold tracking-tight">Audio Forensic Studio</h1>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 uppercase tracking-wider">
+                Multimodal AI
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Multimodal call recording ingestion, speech spectrogram decoding & threat profiling
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Upload a call recording to analyze for scam threats
-        </p>
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="px-2.5 py-1 rounded-full bg-card/80 border border-border/60">
+            Engine: Gemini 1.5 Audio Pipeline
+          </span>
+        </div>
       </motion.div>
 
-      {/* Results View */}
+      {/* Results View or Upload Studio */}
       <AnimatePresence mode="wait">
         {result ? (
           <motion.div
             key="result"
-            className="mt-8 w-full max-w-sm space-y-4"
+            className="mt-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            {/* Risk Score */}
-            <Card className="border-border/50 bg-card/50">
-              <CardContent className="flex flex-col items-center gap-4 p-6">
+            {/* Left Column: Forensic Verdict & Gauge (5 cols) */}
+            <div className="lg:col-span-5 flex flex-col gap-4">
+              <Card className="border-border/50 bg-card/50 backdrop-blur-md overflow-hidden shadow-lg p-6 flex flex-col items-center text-center">
                 <RiskScoreGauge score={result.riskScore} />
-                <div className="flex items-center gap-2">
-                  {result.riskScore > 70 ? (
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
+
+                <div className="mt-4 flex items-center gap-2">
+                  {result.riskScore > 50 ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/40 text-red-300 text-xs font-bold">
+                      <AlertTriangle className="h-4 w-4 text-red-400" />
+                      <span>{result.category || "CRITICAL SCAM CALL"}</span>
+                    </div>
                   ) : (
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <span>{result.category || "SAFE VERIFIED CALL"}</span>
+                    </div>
                   )}
-                  <span className="font-semibold">{result.category}</span>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Explanation */}
-            <Card className="border-border/50 bg-card/50">
-              <CardContent className="p-4">
-                <h3 className="mb-2 text-xs font-medium text-muted-foreground">
-                  ANALYSIS
-                </h3>
-                <p className="text-sm leading-relaxed">{result.explanation}</p>
-              </CardContent>
-            </Card>
+                <div className="mt-6 w-full pt-4 border-t border-border/40 text-xs text-muted-foreground text-left space-y-1.5">
+                  <div className="flex justify-between">
+                    <span>Target File:</span>
+                    <span className="font-mono text-foreground">{result.fileName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Analyzed On:</span>
+                    <span className="font-mono text-foreground">{result.timestamp.replace("T", " ").slice(0, 19)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Forensic Status:</span>
+                    <span className="font-semibold text-primary">Decoded & Indexed</span>
+                  </div>
+                </div>
 
-            {/* Suggestion */}
-            <Card className="border-border/50 bg-card/50">
-              <CardContent className="p-4">
-                <h3 className="mb-2 text-xs font-medium text-muted-foreground">
-                  RECOMMENDATION
-                </h3>
-                <p className="text-sm leading-relaxed">{result.suggestion}</p>
-              </CardContent>
-            </Card>
+                <div className="mt-6 flex w-full gap-3">
+                  <Button variant="outline" className="flex-1 text-xs" onClick={handleReset}>
+                    Upload Another
+                  </Button>
+                  <Button
+                    className="flex-1 text-xs font-semibold"
+                    onClick={() =>
+                      navigate({
+                        to: result.riskScore >= 50 ? "/alert" : "/safe",
+                        search: {
+                          score: result.riskScore,
+                          explanation: result.explanation,
+                          suggestion: result.suggestion,
+                        },
+                      })
+                    }
+                  >
+                    Incident Dossier
+                  </Button>
+                </div>
+              </Card>
+            </div>
 
-            {/* Transcript */}
-            <Card className="border-border/50 bg-card/50">
-              <CardContent className="p-4">
-                <h3 className="mb-2 text-xs font-medium text-muted-foreground">
-                  TRANSCRIPT
+            {/* Right Column: AI Analysis, Recommendation & Full Transcript (7 cols) */}
+            <div className="lg:col-span-7 flex flex-col gap-4">
+              {/* Analysis Explanation */}
+              <Card className="border-border/50 bg-card/50 backdrop-blur-md p-5 shadow-lg">
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  NEURAL THREAT ASSESSMENT
                 </h3>
-                <p className="max-h-40 overflow-y-auto text-sm leading-relaxed text-muted-foreground">
-                  {result.transcript}
+                <p className="text-sm leading-relaxed text-foreground font-medium">
+                  {result.explanation}
                 </p>
-              </CardContent>
-            </Card>
+              </Card>
 
-            {/* File info */}
-            <p className="text-center text-xs text-muted-foreground">
-              File: {result.fileName} · {result.timestamp.split("T")[0]}
-            </p>
+              {/* Recommendation */}
+              <Card className="border-border/50 bg-card/50 backdrop-blur-md p-5 shadow-lg">
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  ACTIONABLE RECOMMENDATION
+                </h3>
+                <p className="text-sm leading-relaxed text-foreground">
+                  {result.suggestion}
+                </p>
+              </Card>
 
-            {/* Actions */}
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={handleReset}>
-                Upload Another
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() =>
-                  navigate({
-                    to: result.riskScore > 70 ? "/alert" : "/safe",
-                    search: {
-                      score: result.riskScore,
-                      explanation: result.explanation,
-                      suggestion: result.suggestion,
-                    },
-                  })
-                }
-              >
-                View Details
-              </Button>
+              {/* Audio Transcript */}
+              <Card className="border-border/50 bg-card/50 backdrop-blur-md p-5 shadow-lg flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    DECODED AUDIO TRANSCRIPT
+                  </h3>
+                  <div className="max-h-48 overflow-y-auto p-3 rounded-xl bg-slate-950/60 border border-border/40 font-mono text-xs leading-relaxed text-foreground">
+                    {result.transcript || "[No speech detected in audio stream]"}
+                  </div>
+                </div>
+              </Card>
             </div>
           </motion.div>
         ) : (
           <motion.div
             key="upload"
-            className="mt-8 w-full max-w-sm space-y-4"
+            className="mt-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            {/* Drop Zone */}
-            <Card
-              className={`cursor-pointer border-2 border-dashed transition-colors ${
-                isDragOver
-                  ? "border-primary bg-primary/5"
-                  : file
-                    ? "border-primary/50 bg-primary/5"
-                    : "border-border/50 bg-card/50 hover:border-primary/30"
-              }`}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <CardContent className="flex flex-col items-center gap-4 p-8">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="audio/*"
-                  onChange={onFileChange}
-                  className="hidden"
-                />
+            {/* Left Column: Dropzone & Upload Controls (6 cols) */}
+            <div className="lg:col-span-7 flex flex-col gap-4">
+              <Card
+                className={`cursor-pointer border-2 border-dashed transition-all p-6 backdrop-blur-md ${
+                  isDragOver
+                    ? "border-primary bg-primary/10 shadow-[0_0_25px_rgba(59,130,246,0.2)]"
+                    : file
+                      ? "border-primary/60 bg-primary/5 shadow-md"
+                      : "border-border/60 bg-card/40 hover:border-primary/40 hover:bg-card/60"
+                }`}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <CardContent className="flex flex-col items-center justify-center text-center gap-4 py-8">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="audio/*"
+                    onChange={onFileChange}
+                    className="hidden"
+                  />
 
-                {file ? (
-                  <>
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
-                      <FileAudio className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleReset();
-                      }}
-                    >
-                      <X className="mr-1 h-4 w-4" /> Remove
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-                      <Upload className="h-7 w-7 text-muted-foreground" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">
-                        {isDragOver ? "Drop audio file here" : "Tap to upload or drag & drop"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        MP3, WAV, OGG, M4A, WebM · Max 10MB
-                      </p>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                  {file ? (
+                    <>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary border border-primary/30 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                        <FileAudio className="h-8 w-8" />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-foreground">{file.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB · {file.type || "Audio Format"}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReset();
+                        }}
+                      >
+                        <X className="mr-1 h-3.5 w-3.5" /> Remove & Choose Another
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-card border border-border/80 text-primary group-hover:scale-110 transition-transform">
+                        <Upload className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-foreground">
+                          {isDragOver ? "Drop audio recording to scan" : "Upload Call Audio File"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
+                          Drag and drop or tap to browse `.mp3`, `.wav`, `.m4a`, `.ogg` recordings up to 10MB
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-card border border-border/70 text-muted-foreground">
+                          Lossless PCM
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-card border border-border/70 text-muted-foreground">
+                          Compressed MP3/M4A
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Progress */}
-            {isAnalyzing && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <Card className="border-border/50 bg-card/50">
-                  <CardContent className="p-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      <span className="text-sm">{statusText}</span>
+              {/* Progress Bar when analyzing */}
+              {isAnalyzing && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <Card className="border-border/50 bg-card/60 backdrop-blur-md p-4">
+                    <div className="mb-2 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-primary font-semibold">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{statusText}</span>
+                      </div>
+                      <span className="font-mono text-muted-foreground">{progress}%</span>
                     </div>
                     <Progress value={progress} className="h-2" />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+                  </Card>
+                </motion.div>
+              )}
 
-            {/* Analyze Button */}
-            {file && !isAnalyzing && (
-              <Button
-                className="w-full gap-2 font-semibold"
-                size="lg"
-                onClick={handleAnalyze}
-              >
-                <Shield className="h-5 w-5" />
-                Analyze Recording
-              </Button>
-            )}
-
-            {/* Or use live monitoring */}
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted-foreground">or</span>
-              <div className="h-px flex-1 bg-border" />
+              {/* Start Analyze Button */}
+              {file && !isAnalyzing && (
+                <Button
+                  className="w-full gap-2 font-bold h-12 text-sm shadow-lg shadow-primary/20"
+                  size="lg"
+                  onClick={handleAnalyze}
+                >
+                  <Shield className="h-5 w-5" />
+                  Run Forensic AI Analysis
+                </Button>
+              )}
             </div>
 
-            <Button
-              variant="outline"
-              className="w-full gap-2"
-              onClick={() => navigate({ to: "/monitoring" })}
-            >
-              <Mic className="h-4 w-4" />
-              Use Live Monitoring
-            </Button>
+            {/* Right Column: Capabilities & Live Switcher (5 cols) */}
+            <div className="lg:col-span-5 flex flex-col gap-4">
+              <Card className="border-border/50 bg-card/40 backdrop-blur-md p-5 shadow-lg">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Forensic Pipeline Capabilities
+                </h3>
+
+                <div className="space-y-3 text-xs">
+                  <div className="p-3 rounded-xl bg-card/60 border border-border/50">
+                    <span className="font-bold text-foreground block mb-0.5">
+                      1. Multimodal Audio Transcription
+                    </span>
+                    <p className="text-muted-foreground">
+                      Converts conversational audio directly into text tokens, supporting both Hindi and English accents.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-card/60 border border-border/50">
+                    <span className="font-bold text-foreground block mb-0.5">
+                      2. Semantic Coercion Detection
+                    </span>
+                    <p className="text-muted-foreground">
+                      Identifies psychological pressure, artificial deadlines, and deceptive banking authority claims.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-card/60 border border-border/50">
+                    <span className="font-bold text-foreground block mb-0.5">
+                      3. Actionable Incident Dossier
+                    </span>
+                    <p className="text-muted-foreground">
+                      Generates immediate advisory steps and prepares draft evidence for Cyber Crime helpline (1930).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-border/40">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 text-xs font-semibold h-10 border-primary/40 hover:bg-primary/10"
+                    onClick={() => navigate({ to: "/monitoring" })}
+                  >
+                    <Mic className="h-4 w-4 text-primary" />
+                    Switch to Live Ambient Interception
+                  </Button>
+                </div>
+              </Card>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -381,7 +459,7 @@ function UploadPage() {
       {/* Error Display */}
       {error && (
         <motion.p
-          className="mt-4 max-w-sm text-center text-sm text-destructive"
+          className="mt-4 max-w-lg text-center text-xs font-medium text-destructive bg-destructive/10 border border-destructive/30 p-3 rounded-xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
