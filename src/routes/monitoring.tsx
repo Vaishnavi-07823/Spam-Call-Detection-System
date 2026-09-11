@@ -41,9 +41,19 @@ export const Route = createFileRoute("/monitoring")({
 
 function MonitoringPage() {
   const navigate = useNavigate();
-  const [selectedLang, setSelectedLang] = useState<"en-IN" | "hi-IN">("en-IN");
-  const { transcript, isListening, error, lang, setLang, startListening, stopListening, resetTranscript } =
-    useSpeechRecognition(selectedLang);
+  const [selectedLang, setSelectedLang] = useState<"en-IN" | "hi-IN">("hi-IN");
+  const {
+    transcript,
+    interimTranscript,
+    isListening,
+    error,
+    lang,
+    setLang,
+    startListening,
+    stopListening,
+    resetTranscript,
+    injectTranscript,
+  } = useSpeechRecognition(selectedLang);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -60,6 +70,9 @@ function MonitoringPage() {
   const simulatorTimerRef = useRef<any>(null);
   const autoCutTimerRef = useRef<any>(null);
   const [manualInputText, setManualInputText] = useState("");
+  const [roleplayInput, setRoleplayInput] = useState("");
+  const isSpeakingVictimRef = useRef(false);
+  const lastProcessedTranscriptRef = useRef("");
 
   // Load and cache browser voices for female vs male distinction
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -313,15 +326,15 @@ function MonitoringPage() {
     [transcript, stopListening, navigate]
   );
 
-  // Auto-analyze when speech reaches high risk
+  // Auto-analyze when speech reaches high risk (ambient monitoring only, not inside call simulator)
   useEffect(() => {
-    if (isListening && liveRisk && liveRisk.ruleScore >= 60) {
+    if (isListening && !isSimulatorOpen && liveRisk && liveRisk.ruleScore >= 60) {
       const timer = setTimeout(() => {
         handleAnalyze();
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [liveRisk, isListening, handleAnalyze]);
+  }, [liveRisk, isListening, isSimulatorOpen, handleAnalyze]);
 
   const handleMicToggle = () => {
     if (isListening) {
@@ -330,6 +343,7 @@ function MonitoringPage() {
         handleAnalyze();
       }
     } else {
+      resetTranscript();
       startListening();
     }
   };
@@ -418,6 +432,7 @@ function MonitoringPage() {
   const closeSimulator = () => {
     stopRingtone();
     stopListening();
+    isSpeakingVictimRef.current = false;
     clearTimeout(simulatorTimerRef.current);
     clearTimeout(autoCutTimerRef.current);
     if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -484,7 +499,7 @@ function MonitoringPage() {
 
       // CRITICAL PROTECTIVE INTERVENTION:
       // When the scammer reaches Turn 6 (OTP / Police threat demand, risk >= 90%),
-      // VoxShield automatically mutes the scammer and disconnects the call mid-sentence!
+      // TrueShield AI automatically mutes the scammer and disconnects the call mid-sentence!
       if (turn.risk >= 90) {
         const fullTranscriptSoFar = SIMULATED_CONVERSATION.slice(0, index + 1)
           .map((t) => `${t.speakerName}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`)
@@ -541,7 +556,10 @@ function MonitoringPage() {
         onDone?.();
         return;
       }
+      isSpeakingVictimRef.current = true;
+      stopListening(); // Mute speech recognition so it doesn't hear synthetic speech
       window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = selectedLang === "hi-IN" ? "hi-IN" : "en-IN";
       if (femaleVoice) {
@@ -549,17 +567,36 @@ function MonitoringPage() {
       }
       utterance.pitch = 1.12;
       utterance.rate = 0.98;
-      utterance.onend = () => onDone?.();
-      utterance.onerror = () => onDone?.();
+
+      let finished = false;
+      const completeTurn = () => {
+        if (finished) return;
+        finished = true;
+        isSpeakingVictimRef.current = false;
+        // Wait 350ms for audio device to stabilize before activating mic
+        setTimeout(() => {
+          onDone?.();
+        }, 350);
+      };
+
+      utterance.onend = completeTurn;
+      utterance.onerror = completeTurn;
+
+      // Chrome safeguard if speechSynthesis onend is dropped
+      setTimeout(() => {
+        if (!finished) completeTurn();
+      }, Math.max(3000, text.length * 120));
+
       window.speechSynthesis.speak(utterance);
     },
-    [selectedLang, femaleVoice]
+    [selectedLang, femaleVoice, stopListening]
   );
 
   /** Accept simulated call — starts 2-way conversation or live user roleplay */
   const handleAcceptSimulatedCall = () => {
     stopRingtone();
     setCallState("connected");
+    lastProcessedTranscriptRef.current = "";
 
     if (simulatorMode === "user_scammer") {
       // User is the scammer! The AI Victim picks up and greets the user first in Hindi girl voice
@@ -589,70 +626,156 @@ function MonitoringPage() {
     }
   };
 
-  /** In User-Scammer Mode: Watch user's live speech and respond as innocent victim, or auto-cut on OTP/Urgency */
-  useEffect(() => {
-    if (
-      isSimulatorOpen &&
-      simulatorMode === "user_scammer" &&
-      callState === "connected" &&
-      transcript.trim()
-    ) {
-      const lower = transcript.toLowerCase();
-      const detectedRisk = analyzeWithRules(transcript);
+  /** In User-Scammer Mode: Process user utterance, respond with authentic Hindi girl voice, or auto-cut on OTP */
+  const handleScammerUtterance = useCallback(
+    (rawText: string) => {
+      const text = rawText.trim();
+      if (!text) return;
 
-      // Check if user (acting as scammer) demanded OTP, password, card details, or threatened police
-      const hasOTP = /otp|one time password|pin|cvv|6-digit|6 digit|password|code/i.test(lower);
-      const hasPoliceOrFreeze = /police|arrest|jail|freeze|block|band|suspend|fir/i.test(lower);
+      const lower = text.toLowerCase();
+      const detectedRisk = analyzeWithRules(text);
 
-      if (hasOTP || detectedRisk.ruleScore >= 75) {
-        // 🚨 AUTO-CUT! Scammer demanded OTP or high-risk coercion
-        triggerProtectiveCallCut(
-          `Scammer (Live User Call): ${transcript}\nVictim: [TRUESHIELD INTERVENTION — Call Terminated Mid-Sentence to Protect OTP]`
-        );
-      } else if (hasPoliceOrFreeze && conversationHistory.length <= 2) {
-        // AI Victim responds nervously to threat
-        const responseText =
-          selectedLang === "hi-IN"
-            ? "Arre sir please account freeze mat kijiye! Par bank wale toh kabhi call par details nahi maangte na?"
-            : "Oh please do not freeze my account sir! But banks never ask for credentials on call right?";
+      // 1. Check for OTP / PIN / Password / Code -> Immediate Auto-Cut!
+      const isOTPDemand =
+        /otp|one time password|pin|cvv|6-digit|6 digit|password|code/i.test(lower) ||
+        (detectedRisk.ruleScore >= 70 && /batao|bataiye|share|send|turant|jaldi/i.test(lower));
 
+      if (isOTPDemand) {
         setConversationHistory((prev) => [
           ...prev,
           {
             speaker: "Scammer",
             speakerName: "You (Live Caller / Scammer)",
-            text: transcript,
-            risk: detectedRisk.ruleScore,
-            status: "Suspicious Bank Threat Detected",
-          },
-          {
-            speaker: "You",
-            speakerName: "Account Holder (Priya Sharma)",
-            text: responseText,
-            risk: detectedRisk.ruleScore,
-            status: "Victim Responding with Caution",
+            text,
+            risk: Math.max(90, detectedRisk.ruleScore),
+            status: "🚨 CRITICAL: OTP Extortion Demanded",
           },
         ]);
-
-        stopListening();
-        speakVictimResponse(responseText, () => {
-          resetTranscript();
-          startListening();
-        });
+        triggerProtectiveCallCut(
+          `Scammer (Live User Call): ${text}\nVictim: [TRUESHIELD INTERVENTION — Call Terminated Mid-Sentence to Protect OTP]`
+        );
+        return;
       }
+
+      // 2. Identify Context & Synthesize Authentic Hindi Victim Reply
+      const isThreat = /police|arrest|jail|freeze|block|band|suspend|fir|case|court|warrant/i.test(lower);
+      const isBankIntro = /bank|sbi|manager|officer|cyber|branch|kyc|verification|khata|paisa|account/i.test(lower);
+      const isDetailDemand = /card|number|aadhaar|pan|expiry|cvv|dob|details|atm/i.test(lower);
+
+      let responseText = "";
+      if (isThreat) {
+        responseText =
+          selectedLang === "hi-IN"
+            ? "Arre sir please account freeze mat kijiye! Par bank wale toh kabhi call par details nahi maangte na?"
+            : "Oh please do not freeze my account sir! But banks never ask for credentials on call right?";
+      } else if (isDetailDemand) {
+        responseText =
+          selectedLang === "hi-IN"
+            ? "Par sir card number ya Aadhaar toh confidential hota hai. Kya main kal subah nazdeeki branch me aakar check karwa loon?"
+            : "Sir, card and Aadhaar details are confidential. Can I come to my local branch tomorrow morning to verify?";
+      } else if (isBankIntro) {
+        responseText =
+          selectedLang === "hi-IN"
+            ? "Ji namaste sir, mere khate ya card me kya dikkat aayi hai? Main toh pichle hafte hi branch gayi thi sab theek tha."
+            : "Yes sir, what issue occurred with my account? I visited the branch just last week and everything was fine.";
+      } else {
+        const turnCount = conversationHistory.length;
+        if (turnCount <= 2) {
+          responseText =
+            selectedLang === "hi-IN"
+              ? "Ji boliye sir, aap kis branch se baat kar rahe hain aur mujhe kya karna hoga?"
+              : "Yes sir, which branch are you calling from and what do I need to do?";
+        } else if (turnCount <= 4) {
+          responseText =
+            selectedLang === "hi-IN"
+              ? "Sir mujhe thoda ajeeb lag raha hai, kya aap apna official employee ID ya registered email share kar sakte hain?"
+              : "Sir I feel a bit hesitant, could you share your official employee ID or email first?";
+        } else {
+          responseText =
+            selectedLang === "hi-IN"
+              ? "Sir agar aap koi OTP ya password mangenge toh main nahi bata sakti. Bank ne saaf mana kiya hai."
+              : "Sir if you are going to ask for OTP or password, I strictly cannot share it. Bank advised against it.";
+        }
+      }
+
+      setConversationHistory((prev) => [
+        ...prev,
+        {
+          speaker: "Scammer",
+          speakerName: "You (Live Caller / Scammer)",
+          text,
+          risk: detectedRisk.ruleScore,
+          status: "Scammer Statement Intercepted",
+        },
+        {
+          speaker: "You",
+          speakerName: "Account Holder (Priya Sharma)",
+          text: responseText,
+          risk: detectedRisk.ruleScore,
+          status: "Victim Responding with Caution",
+        },
+      ]);
+
+      speakVictimResponse(responseText, () => {
+        resetTranscript();
+        startListening();
+      });
+    },
+    [
+      conversationHistory.length,
+      selectedLang,
+      speakVictimResponse,
+      startListening,
+      resetTranscript,
+      triggerProtectiveCallCut,
+    ]
+  );
+
+  /** In User-Scammer Mode: Watch user's live speech and respond as innocent victim, or auto-cut on OTP */
+  useEffect(() => {
+    if (
+      !isSimulatorOpen ||
+      simulatorMode !== "user_scammer" ||
+      callState !== "connected" ||
+      isSpeakingVictimRef.current
+    ) {
+      return;
     }
+
+    const currentText = transcript.trim();
+    if (!currentText || currentText === lastProcessedTranscriptRef.current) {
+      return;
+    }
+
+    const lower = currentText.toLowerCase();
+    const hasOTP = /otp|one time password|pin|cvv|6-digit|6 digit|password|code/i.test(lower);
+
+    if (hasOTP) {
+      // Immediate protective call-cut on OTP demand - don't wait for pause
+      lastProcessedTranscriptRef.current = currentText;
+      handleScammerUtterance(currentText);
+      return;
+    }
+
+    // For other conversational dialogue, wait for user to pause (1.3s of silence)
+    const timer = setTimeout(() => {
+      if (
+        !isSpeakingVictimRef.current &&
+        transcript.trim() &&
+        transcript.trim() !== lastProcessedTranscriptRef.current
+      ) {
+        lastProcessedTranscriptRef.current = transcript.trim();
+        handleScammerUtterance(transcript.trim());
+      }
+    }, 1300);
+
+    return () => clearTimeout(timer);
   }, [
     transcript,
     isSimulatorOpen,
     simulatorMode,
     callState,
-    selectedLang,
-    conversationHistory.length,
-    speakVictimResponse,
-    stopListening,
-    startListening,
-    resetTranscript,
-    triggerProtectiveCallCut,
+    handleScammerUtterance,
   ]);
 
   /** Instant fast-forward to scam alert with protective call-cut */
@@ -977,7 +1100,7 @@ function MonitoringPage() {
                     Live Decrypted Stream ({selectedLang})
                   </span>
                 </div>
-                {transcript && (
+                {(transcript || interimTranscript) && (
                   <button
                     onClick={resetTranscript}
                     className="text-xs text-primary hover:underline font-medium"
@@ -987,16 +1110,27 @@ function MonitoringPage() {
                 )}
               </div>
 
-              {transcript ? (
+              {transcript || interimTranscript ? (
                 <div className="font-mono text-xs sm:text-sm leading-relaxed p-3.5 rounded-xl bg-slate-950/60 border border-border/40 text-foreground max-h-56 overflow-y-auto">
-                  <p className="whitespace-pre-wrap">{transcript}</p>
+                  <p className="whitespace-pre-wrap">
+                    {transcript}
+                    {interimTranscript && (
+                      <span className="text-primary italic animate-pulse">
+                        {transcript ? " " : ""}{interimTranscript}
+                      </span>
+                    )}
+                  </p>
                 </div>
               ) : (
                 <div className="py-12 flex flex-col items-center justify-center text-center text-muted-foreground font-mono text-xs border border-dashed border-border/50 rounded-xl bg-card/20">
                   <Mic className="h-6 w-6 text-muted-foreground/40 mb-2" />
-                  <p>Stream buffer empty</p>
-                  <p className="text-[11px] text-muted-foreground/60 mt-0.5">
-                    Speech captured via microphone or simulator will stream here in real time
+                  <p className="font-semibold text-foreground/80">
+                    {isListening ? "🎙️ Acoustic Sensor Active — Listening..." : "Stream buffer empty"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/60 mt-0.5 max-w-xs">
+                    {isListening
+                      ? "Speak now in Hindi or English (e.g., 'Main bank se bol raha hoon, OTP bataiye')"
+                      : "Click the Mic button or launch a Phone Call Simulator to stream live audio"}
                   </p>
                 </div>
               )}
@@ -1297,35 +1431,140 @@ function MonitoringPage() {
                     })}
                   </div>
 
-                  {/* Live Speaker Telemetry Indicator */}
-                  <div className="w-full py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs mt-1">
-                    <div className="flex items-center gap-2 text-slate-300">
-                      {simulatorMode === "user_scammer" ? (
-                        <>
-                          <Mic className="h-4 w-4 text-red-400 animate-pulse" />
-                          <span className="text-[11px] font-bold text-red-300">
-                            Speak to scam: Try saying &ldquo;OTP bataiye&rdquo;...
+                  {/* User-Scammer Mode: Real-Time Acoustic Feedback & Quick Roleplay Chips */}
+                  {simulatorMode === "user_scammer" && (
+                    <div className="w-full space-y-2 my-1">
+                      {/* Live Mic Speech Card */}
+                      <div className="w-full p-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner">
+                        <div className="flex items-center justify-between text-[10px] mb-1">
+                          <span className="flex items-center gap-1.5 font-bold text-red-400">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                            </span>
+                            {isListening ? "Microphone Live (Speak now)" : "Priya is replying..."}
                           </span>
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 className="h-4 w-4 text-primary animate-pulse" />
-                          <span className="text-[11px] font-bold">
-                            {currentTurn.speaker === "Scammer"
-                              ? "👨 Rajesh speaking (Male Voice)..."
-                              : "👩 You speaking (Girl Voice)..."}
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {selectedLang === "hi-IN" ? "हिंदी / Hinglish" : "English"}
                           </span>
-                        </>
-                      )}
+                        </div>
+                        <div className="font-mono text-xs text-slate-200 min-h-[22px] break-words">
+                          {interimTranscript || transcript ? (
+                            <span>
+                              <span className="text-white font-medium">{transcript}</span>
+                              {interimTranscript && (
+                                <span className="text-primary italic animate-pulse">
+                                  {transcript ? " " : ""}{interimTranscript}
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 italic text-[11px]">
+                              Say &ldquo;Main bank se bol raha hoon&rdquo; or &ldquo;OTP batao&rdquo; into mic...
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quick Roleplay 1-Tap Chips */}
+                      <div className="w-full space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                            Quick Scammer Prompts (1-Tap):
+                          </span>
+                          <span className="text-[9px] text-amber-400 font-semibold">Interactive</span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-1">
+                          <button
+                            onClick={() => {
+                              const line =
+                                selectedLang === "hi-IN"
+                                  ? "Namaste madam, main SBI bank Mumbai head office se bol raha hoon. Kya meri baat account holder se ho rahi hai?"
+                                  : "Hello madam, I am calling from SBI Mumbai head office. Am I speaking with the account holder?";
+                              handleScammerUtterance(line);
+                            }}
+                            className="text-left text-[11px] px-2.5 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition-all flex items-center justify-between group active:scale-[0.98]"
+                          >
+                            <span className="truncate pr-1">💬 1. &ldquo;SBI Head Office se bol raha hoon&rdquo;</span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold shrink-0">Intro</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const line =
+                                selectedLang === "hi-IN"
+                                  ? "Aapka account aur ATM card aaj raat freeze ho jayega agar details verify nahi ki!"
+                                  : "Your account and ATM card will be frozen tonight if you do not verify details!";
+                              handleScammerUtterance(line);
+                            }}
+                            className="text-left text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/50 text-amber-200 border border-amber-500/40 transition-all flex items-center justify-between group active:scale-[0.98]"
+                          >
+                            <span className="truncate pr-1">⚠️ 2. &ldquo;Account & ATM freeze ho jayega&rdquo;</span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold shrink-0">Threat</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const line =
+                                selectedLang === "hi-IN"
+                                  ? "Turant mobile par aaya hua 6-digit OTP bataiye warna police complaint hogi!"
+                                  : "Share the 6-digit OTP sent to your mobile right now or face police action!";
+                              handleScammerUtterance(line);
+                            }}
+                            className="text-left text-[11px] px-2.5 py-1.5 rounded-lg bg-red-950/50 hover:bg-red-900/60 text-red-200 border border-red-500/50 transition-all flex items-center justify-between group active:scale-[0.98] font-bold shadow-sm"
+                          >
+                            <span className="truncate pr-1">🚨 3. &ldquo;Turant 6-digit OTP bataiye&rdquo;</span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/30 text-red-300 font-extrabold shrink-0 animate-pulse">AUTO-CUT!</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Direct Text Input Fallback inside phone */}
+                      <div className="w-full flex items-center gap-1.5 pt-0.5">
+                        <input
+                          type="text"
+                          value={roleplayInput}
+                          onChange={(e) => setRoleplayInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && roleplayInput.trim()) {
+                              handleScammerUtterance(roleplayInput.trim());
+                              setRoleplayInput("");
+                            }
+                          }}
+                          placeholder="Type scammer line or speak into mic..."
+                          className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-900 border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-primary font-sans"
+                        />
+                        <Button
+                          size="sm"
+                          className="h-8 px-3 text-xs font-bold bg-primary hover:bg-primary/90"
+                          disabled={!roleplayInput.trim()}
+                          onClick={() => {
+                            if (roleplayInput.trim()) {
+                              handleScammerUtterance(roleplayInput.trim());
+                              setRoleplayInput("");
+                            }
+                          }}
+                        >
+                          Send
+                        </Button>
+                      </div>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {simulatorMode === "user_scammer"
-                        ? isListening
-                          ? "Mic Live"
-                          : "Connecting..."
-                        : currentTurn.status}
-                    </span>
-                  </div>
+                  )}
+
+                  {/* Live Speaker Telemetry Indicator for Bot Mode */}
+                  {simulatorMode === "bot" && (
+                    <div className="w-full py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs mt-1">
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Volume2 className="h-4 w-4 text-primary animate-pulse" />
+                        <span className="text-[11px] font-bold">
+                          {currentTurn.speaker === "Scammer"
+                            ? "👨 Rajesh speaking (Male Voice)..."
+                            : "👩 You speaking (Girl Voice)..."}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {currentTurn.status}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Active In-Call End Button & Fast Forward */}
                   <div className="flex items-center justify-between w-full pt-4 mt-2 border-t border-slate-800">
