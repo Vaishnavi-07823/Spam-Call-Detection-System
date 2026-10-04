@@ -11,6 +11,7 @@ export interface DetectionResult {
   riskScore: number;
   explanation: string;
   suggestion: string;
+  detailedReasoning?: string;
   timestamp: string;
   transcript: string;
   category: string;
@@ -22,6 +23,7 @@ export interface HistoryItem {
   riskScore: number;
   explanation: string;
   suggestion: string;
+  detailedReasoning?: string;
   timestamp: string;
   transcript: string;
   category: string;
@@ -32,9 +34,11 @@ export interface HistoryItem {
  * Uses server function (runs on server, callable from client).
  */
 export async function analyzeTranscript(
-  transcript: string
+  transcript: string,
+  sessionId?: string,
+  resetSession?: boolean
 ): Promise<DetectionResult> {
-  return detectScam({ data: { transcript } });
+  return detectScam({ data: { transcript, sessionId, resetSession } });
 }
 
 /**

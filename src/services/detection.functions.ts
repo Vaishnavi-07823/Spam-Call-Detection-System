@@ -16,29 +16,31 @@ const detectInputSchema = z.object({
     .string()
     .min(3, "Transcript must be at least 3 characters")
     .max(5000, "Transcript must be under 5000 characters"),
+  sessionId: z.string().optional(),
+  resetSession: z.boolean().optional(),
 });
 
 /**
  * Analyzes a transcript for scam indicators using both
- * rule-based keyword matching and AI-powered analysis.
+ * rule-based keyword matching and AI-powered analysis with conversation context.
  * Final score = max(ruleScore, aiScore) for maximum sensitivity.
  */
 export const detectScam = createServerFn({ method: "POST" })
-  .inputValidator((input: { transcript: string }) =>
+  .inputValidator((input: { transcript: string; sessionId?: string; resetSession?: boolean }) =>
     detectInputSchema.parse(input)
   )
   .handler(async ({ data }) => {
-    const { transcript } = data;
+    const { transcript, sessionId, resetSession } = data;
 
     // Step 1: Rule-based analysis (fast, deterministic)
     const ruleResult = analyzeWithRules(transcript);
 
-    // Step 2: AI-powered analysis with fallback note
+    // Step 2: AI-powered analysis with running context and fallback note
     let aiResult;
     let aiUnavailable = false;
 
     try {
-      aiResult = await analyzeWithAI(transcript);
+      aiResult = await analyzeWithAI(transcript, sessionId, resetSession);
     } catch (err) {
       console.warn("AI analysis timed out or failed, falling back to rules:", err);
       aiUnavailable = true;
@@ -50,6 +52,7 @@ export const detectScam = createServerFn({ method: "POST" })
           ruleResult.ruleScore > 70
             ? "End the call immediately and block the number."
             : "This call appears safe, but stay vigilant.",
+        detailedReasoning: ruleResult.reason,
       };
     }
 
@@ -71,7 +74,9 @@ export const detectScam = createServerFn({ method: "POST" })
 
     const combinedReason = aiUnavailable
       ? `[Note: AI analysis unavailable, showing rule-based result] ${baseReason}`
-      : baseReason;
+      : aiResult.detailedReasoning && !baseReason.includes(aiResult.detailedReasoning)
+        ? `${baseReason} Pattern Analysis: ${aiResult.detailedReasoning}`
+        : baseReason;
 
     const suggestion =
       aiResult.suggestion ||
@@ -103,6 +108,7 @@ export const detectScam = createServerFn({ method: "POST" })
       category: categoryLabel,
       explanation: combinedReason,
       suggestion,
+      detailedReasoning: aiResult.detailedReasoning || combinedReason,
       timestamp: new Date().toISOString(),
       transcript,
     };

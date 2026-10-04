@@ -1,10 +1,27 @@
 /**
- * Gemini AI Analysis Service for VoxShield AI
+ * Gemini AI Analysis Service for TrueShield AI
  * 
- * Uses Lovable AI Gateway (Google Gemini) to analyze transcripts
- * for scam intent using natural language understanding.
+ * Uses Google Gemini (or Lovable AI Gateway) to analyze transcripts
+ * for scam intent using natural language understanding with full conversation context.
  */
 import { z } from "zod";
+
+/** In-memory running transcript store per call session */
+const sessionTranscripts = new Map<string, string[]>();
+
+/**
+ * Resets the accumulated transcript history for a call session.
+ */
+export function resetCallSession(sessionId: string = "current_call_session"): void {
+  sessionTranscripts.delete(sessionId);
+}
+
+/**
+ * Retrieves the full running transcript accumulated for a call session.
+ */
+export function getRunningTranscript(sessionId: string = "current_call_session"): string {
+  return (sessionTranscripts.get(sessionId) || []).join("\n");
+}
 
 /** Schema for the AI analysis response */
 const aiAnalysisSchema = z.object({
@@ -12,15 +29,21 @@ const aiAnalysisSchema = z.object({
   category: z.string(),
   reason: z.string(),
   suggestion: z.string(),
+  detailedReasoning: z.string().optional(),
 });
 
 export type AIAnalysisResult = z.infer<typeof aiAnalysisSchema>;
 
 /**
- * Sends a transcript to Gemini via Lovable AI Gateway for scam analysis.
- * Uses tool calling for structured output extraction.
+ * Sends a transcript chunk to Gemini for scam analysis, accumulating and sending
+ * the full running transcript for the current call session so the AI considers
+ * the conversation's full arc.
  */
-export async function analyzeWithAI(transcript: string): Promise<AIAnalysisResult> {
+export async function analyzeWithAI(
+  transcript: string,
+  sessionId: string = "current_call_session",
+  resetSession: boolean = false
+): Promise<AIAnalysisResult> {
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
@@ -28,8 +51,27 @@ export async function analyzeWithAI(transcript: string): Promise<AIAnalysisResul
     throw new Error("Neither LOVABLE_API_KEY nor GEMINI_API_KEY is configured.");
   }
 
+  // Reset session history if explicitly requested
+  if (resetSession) {
+    sessionTranscripts.delete(sessionId);
+  }
+
+  const trimmed = transcript.trim();
+  const history = sessionTranscripts.get(sessionId) || [];
+  const fullHistoryText = history.join(" ");
+
+  // Accumulate running transcript without redundant repeats if caller already sends cumulative text
+  if (history.length > 0 && trimmed.startsWith(fullHistoryText)) {
+    sessionTranscripts.set(sessionId, [trimmed]);
+  } else if (!history.includes(trimmed)) {
+    history.push(trimmed);
+    sessionTranscripts.set(sessionId, history);
+  }
+
+  const runningTranscript = (sessionTranscripts.get(sessionId) || [trimmed]).join("\n");
+
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const timeoutId = setTimeout(() => controller.abort(), 7000);
 
   try {
     if (GEMINI_API_KEY) {
@@ -43,9 +85,26 @@ export async function analyzeWithAI(transcript: string): Promise<AIAnalysisResul
             {
               parts: [
                 {
-                  text: `You are a scam call detection AI. Analyze the given phone call transcript and determine if it's a scam.
-Evaluate for: personal info requests (OTP, passwords), urgency/pressure, authority impersonation, lottery/prizes, unusual payments, remote access, threats.
-Analyze this transcript:\n"${transcript}"`,
+                  text: `You are a scam call detection AI analyzing a phone call session in real time.
+CRITICAL INSTRUCTION: Analyze the full conversation context across its entire arc, not just the latest chunk in isolation. A transcript chunk that seems innocent alone (e.g., asking for confirmation or saying okay) but follows earlier urgency, threats, or authority impersonation earlier in the call must still score high.
+
+Full Running Conversation Transcript So Far:
+"""
+${runningTranscript}
+"""
+
+Latest Transcript Chunk:
+"""
+${trimmed}
+"""
+
+Evaluate the entire conversation arc for scam indicators: personal info requests (OTP, passwords, PINs), urgency/pressure tactics, authority impersonation, lottery/prizes, unusual payments, remote access, threats.
+Provide:
+1. riskScore: integer from 0 to 100
+2. category: one of credential_theft, financial_fraud, identity_theft, pressure_tactic, verification_scam, impersonation, lottery_scam, tech_support_scam, safe
+3. reason: concise explanation of the risk
+4. suggestion: recommended safety action for the user
+5. detailedReasoning: a short 1-line detailed reasoning explaining WHY that score was assigned, referencing what pattern across the conversation triggered it.`,
                 },
               ],
             },
@@ -72,8 +131,13 @@ Analyze this transcript:\n"${transcript}"`,
                 },
                 reason: { type: "STRING" },
                 suggestion: { type: "STRING" },
+                detailedReasoning: {
+                  type: "STRING",
+                  description:
+                    "A short 1-line detailed reasoning explaining WHY that score, referencing what pattern across the conversation triggered it.",
+                },
               },
-              required: ["riskScore", "category", "reason", "suggestion"],
+              required: ["riskScore", "category", "reason", "suggestion", "detailedReasoning"],
             },
           },
         }),
@@ -87,7 +151,12 @@ Analyze this transcript:\n"${transcript}"`,
       const textResponse = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!textResponse) throw new Error("Gemini API returned empty response");
 
-      return aiAnalysisSchema.parse(JSON.parse(textResponse));
+      const parsed = JSON.parse(textResponse);
+      if (!parsed.detailedReasoning && parsed.detailed_reasoning) {
+        parsed.detailedReasoning = parsed.detailed_reasoning;
+      }
+
+      return aiAnalysisSchema.parse(parsed);
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -102,9 +171,13 @@ Analyze this transcript:\n"${transcript}"`,
         messages: [
           {
             role: "system",
-            content: "You are a scam call detection AI. Return analysis using the analyze_transcript tool.",
+            content:
+              "You are a scam call detection AI analyzing a phone call session in real time. Analyze the entire running conversation history across its full arc, not just the latest chunk in isolation. A statement that seems innocent alone but follows urgent pressure or impersonation earlier in the call should still score high. Return analysis using the analyze_transcript tool with a 1-line detailedReasoning explaining what pattern across the conversation triggered the score.",
           },
-          { role: "user", content: transcript },
+          {
+            role: "user",
+            content: `Full Running Conversation Transcript So Far:\n"""\n${runningTranscript}\n"""\n\nLatest Transcript Chunk:\n"""\n${trimmed}\n"""`,
+          },
         ],
         tools: [
           {
@@ -118,8 +191,13 @@ Analyze this transcript:\n"${transcript}"`,
                   category: { type: "string" },
                   reason: { type: "string" },
                   suggestion: { type: "string" },
+                  detailedReasoning: {
+                    type: "string",
+                    description:
+                      "A short 1-line detailed reasoning explaining WHY that score, referencing what pattern across the conversation triggered it.",
+                  },
                 },
-                required: ["riskScore", "category", "reason", "suggestion"],
+                required: ["riskScore", "category", "reason", "suggestion", "detailedReasoning"],
               },
             },
           },
@@ -134,7 +212,12 @@ Analyze this transcript:\n"${transcript}"`,
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) throw new Error("Missing tool call in AI response");
 
-    return aiAnalysisSchema.parse(JSON.parse(toolCall.function.arguments));
+    const parsed = JSON.parse(toolCall.function.arguments);
+    if (!parsed.detailedReasoning && parsed.detailed_reasoning) {
+      parsed.detailedReasoning = parsed.detailed_reasoning;
+    }
+
+    return aiAnalysisSchema.parse(parsed);
   } finally {
     clearTimeout(timeoutId);
   }

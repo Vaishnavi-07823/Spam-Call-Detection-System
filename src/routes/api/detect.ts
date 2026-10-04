@@ -27,6 +27,8 @@ const detectSchema = z.object({
     .string()
     .min(3, "Transcript must be at least 3 characters")
     .max(5000, "Transcript must be under 5000 characters"),
+  sessionId: z.string().optional(),
+  resetSession: z.boolean().optional(),
 });
 
 export const Route = createFileRoute("/api/detect")({
@@ -57,15 +59,15 @@ export const Route = createFileRoute("/api/detect")({
             );
           }
 
-          const { transcript } = parsed.data;
+          const { transcript, sessionId, resetSession } = parsed.data;
 
           // Rule-based analysis
           const ruleResult = analyzeWithRules(transcript);
 
-          // AI-powered analysis
+          // AI-powered analysis with conversation context
           let aiResult;
           try {
-            aiResult = await analyzeWithAI(transcript);
+            aiResult = await analyzeWithAI(transcript, sessionId, resetSession);
           } catch (err) {
             console.error("AI analysis failed:", err);
             aiResult = {
@@ -76,6 +78,7 @@ export const Route = createFileRoute("/api/detect")({
                 ruleResult.ruleScore > 70
                   ? "End the call immediately and block the number."
                   : "This call appears safe, but stay vigilant.",
+              detailedReasoning: ruleResult.reason,
             };
           }
 
@@ -116,6 +119,7 @@ export const Route = createFileRoute("/api/detect")({
               category: categoryLabel,
               reason: combinedReason,
               suggestion: aiResult.suggestion,
+              detailedReasoning: aiResult.detailedReasoning || combinedReason,
               timestamp: new Date().toISOString(),
             }),
             {
