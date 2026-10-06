@@ -18,7 +18,7 @@ export const lovable = {
       // If we are running on Vercel or custom domain, use Supabase OAuth directly
       if (!lovableAuth) {
         const { error } = await supabase.auth.signInWithOAuth({
-          provider,
+          provider: (provider === "microsoft" ? "azure" : provider) as any,
           options: {
             redirectTo: opts?.redirect_uri || window.location.origin,
             queryParams: opts?.extraParams,

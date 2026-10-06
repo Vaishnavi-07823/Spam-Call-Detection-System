@@ -98,7 +98,7 @@ export interface RuleAnalysisResult {
   /** Risk score from rule-based analysis (0-100) */
   ruleScore: number;
   /** Matched keywords with their categories */
-  matchedKeywords: { keyword: string; category: string }[];
+  matchedKeywords: { keyword: string; category: string; weight?: number }[];
   /** Primary scam category detected */
   primaryCategory: string;
   /** Human-readable reason */
@@ -106,17 +106,27 @@ export interface RuleAnalysisResult {
 }
 
 /**
+ * Helper to match keyword with word boundary awareness.
+ * Prevents false positives where short keywords (e.g., 'apk')
+ * inadvertently match inside innocent words (e.g., 'aapka').
+ */
+function matchesKeyword(text: string, keyword: string): boolean {
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(^|[^a-zA-Z0-9])${escaped}([^a-zA-Z0-9]|$)`, "i");
+  return regex.test(text);
+}
+
+/**
  * Analyzes a transcript using keyword matching rules.
  * Returns a risk score and matched pattern details.
  */
 export function analyzeWithRules(transcript: string): RuleAnalysisResult {
-  const lowerTranscript = transcript.toLowerCase();
   const matchedKeywords: { keyword: string; category: string; weight: number }[] = [];
   let totalWeight = 0;
 
   // Scan for each keyword
   for (const entry of SCAM_KEYWORDS) {
-    if (lowerTranscript.includes(entry.keyword)) {
+    if (matchesKeyword(transcript, entry.keyword)) {
       matchedKeywords.push(entry);
       totalWeight += entry.weight;
     }

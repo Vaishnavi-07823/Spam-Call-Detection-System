@@ -1,9 +1,9 @@
-# VoxShield AI: Research Paper Methodology, Architecture & Figures
+# TrueShield AI: Research Paper Methodology, Architecture & Figures
 
 **Author:** Vaishnavi Trivedi  
 **Department:** Computer Science and Engineering (Cybersecurity)  
 **Institution:** G.H. Raisoni College of Engineering (GHRCE), Nagpur  
-**Project:** VoxShield AI — Real-Time Conversational Fraud and Scam Detection Engine
+**Project:** TrueShield AI — Real-Time Conversational Fraud and Scam Detection Engine
 
 ---
 
@@ -28,7 +28,7 @@ All figures in this package are **100% original, plagiarism-free vector diagrams
 ### A. Architectural Overview
 Traditional telecommunication anti-fraud mechanisms rely predominantly on static caller-ID blacklists or post-call forensic audits. However, modern social engineering attacks exploit VoIP spoofing, ephemeral SIM cards, and fast-paced coercive tactics (such as immediate UPI transfers or digital arrest pretexts) that compromise victims before post-incident audits can intervene.
 
-To mitigate this critical vulnerability, **VoxShield AI** implements a zero-trust, continuous, in-call conversational monitoring pipeline that analyzes ongoing acoustic speech streams in real time. The architecture comprises four integrated layers:
+To mitigate this critical vulnerability, **TrueShield AI** implements a zero-trust, continuous, in-call conversational monitoring pipeline that analyzes ongoing acoustic speech streams in real time. The architecture comprises four integrated layers:
 
 1. **Acoustic Ingestion & Streaming ASR Tier:** Captures ambient or speakerphone audio directly from the client terminal using the Web Audio and Web Speech APIs (`webkitSpeechRecognition`). The engine operates in continuous mode (`continuous: true`, `interimResults: true`) targeting localized acoustic models (`en-IN` and `hi-IN`). Audio frames are transcribed into tokenized streaming text segments.
 2. **Temporal Segmentation & Sliding Window:** To eliminate processing lag, transcription tokens are fed into an adaptive sliding window buffer. Once a segment reaches the minimal threshold ($\ge 3$ characters), the input is sanitized and validated against a strict schema (limiting payloads between 3 and 5,000 characters) before asynchronous parallel dispatch.
@@ -90,7 +90,7 @@ $$\text{HUD\_State}(S_{\text{final}}) = \begin{cases}
 ```latex
 \begin{algorithm}[H]
 \caption{Real-Time Dual-Engine Scam Call Detection Algorithm}
-\label{alg:voxshield_detection}
+\label{alg:trueshield_detection}
 \begin{algorithmic}[1]
 \REQUIRE Streaming Audio Stream $\mathcal{A}$, Lexicon $\mathcal{D}$, Timeout Threshold $\tau = 6000\text{ms}$
 \ENSURE Real-time Risk Score $S_{\text{final}}$, Category $C_{\text{final}}$, Mitigation Action $\mathcal{U}$
@@ -148,8 +148,8 @@ $$\text{HUD\_State}(S_{\text{final}}) = \begin{cases}
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/figure1_system_architecture.png}
-\caption{End-to-End System Architecture of VoxShield AI: Comprising streaming acoustic ingestion via Web Speech API, parallel dual-engine lexical and cognitive LLM reasoning, maximum-pooling arbitration core, and live HUD telemetry.}
-\label{fig:voxshield_architecture}
+\caption{End-to-End System Architecture of TrueShield AI: Comprising streaming acoustic ingestion via Web Speech API, parallel dual-engine lexical and cognitive LLM reasoning, maximum-pooling arbitration core, and live HUD telemetry.}
+\label{fig:trueshield_architecture}
 \end{figure*}
 ```
 
@@ -159,7 +159,7 @@ $$\text{HUD\_State}(S_{\text{final}}) = \begin{cases}
 \centering
 \includegraphics[width=\columnwidth]{figures/figure2_detection_workflow.png}
 \caption{Real-Time Processing Workflow and State Transition Diagram: Illustrating the continuous acoustic capture loop, asynchronous parallel analysis, 6000ms circuit-breaker fallback, and tri-tier risk threshold evaluation.}
-\label{fig:voxshield_workflow}
+\label{fig:trueshield_workflow}
 \end{figure}
 ```
 
@@ -169,7 +169,7 @@ $$\text{HUD\_State}(S_{\text{final}}) = \begin{cases}
 \centering
 \includegraphics[width=\textwidth]{figures/figure3_hybrid_scoring_pipeline.png}
 \caption{Hybrid Threat Fusion Pipeline and Mathematical Scoring Model: Formulating lexical weight accumulation $S_{\text{rule}}$, LLM semantic inference $S_{\text{AI}}$, timeout circuit breaker, and the Max-Pooling fusion operator $S_{\text{final}} = \max(S_{\text{rule}}, S_{\text{AI}})$.}
-\label{fig:voxshield_scoring}
+\label{fig:trueshield_scoring}
 \end{figure*}
 ```
 
@@ -179,6 +179,6 @@ $$\text{HUD\_State}(S_{\text{final}}) = \begin{cases}
 \centering
 \includegraphics[width=\textwidth]{figures/figure4_scam_threat_taxonomy.png}
 \caption{Taxonomy of Phone Fraud Threat Vectors: Eight-tier ontology modeling credential theft, remote access tools, authority impersonation, utility fraud, and regional Hinglish coercion tactics.}
-\label{fig:voxshield_taxonomy}
+\label{fig:trueshield_taxonomy}
 \end{figure*}
 ```

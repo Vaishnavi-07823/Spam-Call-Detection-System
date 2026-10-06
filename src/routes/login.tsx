@@ -11,7 +11,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { next?: string } => ({
     next: typeof s.next === "string" && s.next.startsWith("/") ? s.next : undefined,
   }),
   head: () => ({

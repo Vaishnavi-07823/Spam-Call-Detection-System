@@ -52,7 +52,7 @@ def create_research_paper():
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_title.paragraph_format.space_before = Pt(0)
     p_title.paragraph_format.space_after = Pt(8)
-    r_title = p_title.add_run("VoxShield AI: An Explainable AI-Driven Autonomous Real-Time Scam Call Detection and Threat Mitigation System")
+    r_title = p_title.add_run("TrueShield AI: An Explainable AI-Driven Autonomous Real-Time Scam Call Detection and Threat Mitigation System")
     r_title.font.name = 'Times New Roman'
     r_title.font.size = Pt(18)
     r_title.font.bold = True
@@ -99,7 +99,7 @@ def create_research_paper():
     r_abs_bold.font.size = Pt(10)
 
     r_abs_text = p_abs.add_run(
-        "Telephonic fraud and voice phishing (vishing) have escalated into critical cybersecurity threats, causing billions of dollars in annual global losses. Conventional defense paradigms, including static caller-ID blacklists and reputation databases, are readily circumvented via Voice over IP (VoIP) spoofing, rotating SIM pools, and short-lived virtual numbers. Furthermore, post-call forensic tools fail to protect victims during active social engineering coercion, where rapid unauthorized financial transfers occur within minutes. To address this fundamental limitation, this paper introduces VoxShield AI, an autonomous, client-edge, explainable system engineered for real-time conversational scam detection during active telephone calls. Operating via non-intrusive acoustic capture, the system transcribes ongoing speech through localized automatic speech recognition (ASR) tuned for English and Indian regional vernaculars (en-IN, hi-IN). The core threat engine executes a parallel dual-engine architecture comprising: (i) an ultra-low-latency (sub-5 ms) deterministic lexical analyzer targeting a weighted ontology of 95+ high-critical scam triggers, and (ii) a deep cognitive semantic reasoner leveraging the Google Gemini 1.5 Flash Large Language Model via structured JSON tool calling to detect psychological manipulation, authority impersonation, and pressure tactics. A latency-bounded watchdog circuit breaker and maximum-pooling arbitration operator fuse the outputs into an actionable risk metric (0–100) and tri-tier defense state (Safe, Suspicious, Critical). Experimental validation over diverse synthetic and real-world telephonic fraud datasets demonstrates that VoxShield AI achieves 85%–95% scam detection accuracy, bounded end-to-end response latency under 1.85 seconds, zero storage of raw acoustic audio, and robust explainability that empowers users with real-time defensive guidance."
+        "Telephonic fraud and voice phishing (vishing) have escalated into critical cybersecurity threats, causing billions of dollars in annual global losses. Conventional defense paradigms, including static caller-ID blacklists and reputation databases, are readily circumvented via Voice over IP (VoIP) spoofing, rotating SIM pools, and short-lived virtual numbers. Furthermore, post-call forensic tools fail to protect victims during active social engineering coercion, where rapid unauthorized financial transfers occur within minutes. To address this fundamental limitation, this paper introduces TrueShield AI, an autonomous, client-edge, explainable system engineered for real-time conversational scam detection during active telephone calls. Operating via non-intrusive acoustic capture, the system transcribes ongoing speech through localized automatic speech recognition (ASR) tuned for English and Indian regional vernaculars (en-IN, hi-IN). The core threat engine executes a parallel dual-engine architecture comprising: (i) an ultra-low-latency (sub-5 ms) deterministic lexical analyzer targeting a weighted ontology of 95+ high-critical scam triggers, and (ii) a deep cognitive semantic reasoner leveraging the Google Gemini 1.5 Flash Large Language Model via structured JSON tool calling to detect psychological manipulation, authority impersonation, and pressure tactics. A latency-bounded watchdog circuit breaker and maximum-pooling arbitration operator fuse the outputs into an actionable risk metric (0–100) and tri-tier defense state (Safe, Suspicious, Critical). Experimental validation over diverse synthetic and real-world telephonic fraud datasets demonstrates that TrueShield AI achieves 85%–95% scam detection accuracy, bounded end-to-end response latency under 1.85 seconds, zero storage of raw acoustic audio, and robust explainability that empowers users with real-time defensive guidance."
     )
     r_abs_text.font.size = Pt(9.5)
 
@@ -214,9 +214,9 @@ def create_research_paper():
         "Contemporary efforts to inspect call content encounter three major operational bottlenecks: (1) Latency: Post-call recording and cloud audio analysis evaluate conversations after the session terminates, providing forensic value but failing to prevent real-time financial exfiltration; (2) Computational and Battery Constraints: Deploying deep multi-layer neural networks locally on edge mobile devices causes severe processor throttling, thermal elevation, and rapid battery depletion; and (3) Opaque Classification: Black-box machine learning classifiers emit binary 'spam' labels without providing explainable justification, eroding user trust and failing to educate the subscriber on the specific deception vectors deployed against them."
     )
 
-    add_subsec_heading("B. Technical Contributions of VoxShield AI")
+    add_subsec_heading("B. Technical Contributions of TrueShield AI")
     add_p(
-        "To overcome these fundamental challenges, this paper presents VoxShield AI, an autonomous, client-edge, explainable scam detection system designed for real-time operation during active voice calls. The core technical contributions of this research are summarized as follows:"
+        "To overcome these fundamental challenges, this paper presents TrueShield AI, an autonomous, client-edge, explainable scam detection system designed for real-time operation during active voice calls. The core technical contributions of this research are summarized as follows:"
     )
     add_p(
         "1) Streaming Dual-Engine Hybrid Architecture: We develop an asynchronous pipeline combining an ultra-fast (sub-5 ms) deterministic lexical heuristic engine with a cognitive Large Language Model (Google Gemini 1.5 Flash) invoked via strict structured JSON tool calling."
@@ -232,7 +232,7 @@ def create_research_paper():
     )
 
     # Embed Figure 5 (Graphical Abstract Concept)
-    add_figure_image(fig5_path, 1, "Conceptual illustration of VoxShield AI real-time in-call acoustic capture, streaming dual AI threat analysis, and ambient holographic shield HUD.", width_in=6.0)
+    add_figure_image(fig5_path, 1, "Conceptual illustration of TrueShield AI real-time in-call acoustic capture, streaming dual AI threat analysis, and ambient holographic shield HUD.", width_in=6.0)
 
     # =========================================================================
     # SECTION II: RELATED WORK
@@ -257,22 +257,22 @@ def create_research_paper():
 
     add_subsec_heading("C. Large Language Models and Real-Time Reasoning")
     add_p(
-        "The emergence of instruction-tuned Large Language Models, such as the GPT family [24] and Google Gemini [1], has revolutionized automated semantic reasoning. Recent preliminary studies [7]–[9] demonstrate that LLMs possess sophisticated zero-shot reasoning capabilities, allowing them to detect subtle social engineering vectors, emotional coercion, and contradictory authority claims without manual feature engineering. However, deploying multi-billion parameter LLMs directly on resource-constrained smartphones introduces prohibitive computational latency (often exceeding 5–10 seconds) and battery exhaustion. VoxShield AI addresses this critical trade-off through a decoupled hybrid architecture, executing lightweight lexical matching directly at the edge while streaming segmented conversational tokens to a cloud-based LLM engine bounded by strict timeout watchdogs."
+        "The emergence of instruction-tuned Large Language Models, such as the GPT family [24] and Google Gemini [1], has revolutionized automated semantic reasoning. Recent preliminary studies [7]–[9] demonstrate that LLMs possess sophisticated zero-shot reasoning capabilities, allowing them to detect subtle social engineering vectors, emotional coercion, and contradictory authority claims without manual feature engineering. However, deploying multi-billion parameter LLMs directly on resource-constrained smartphones introduces prohibitive computational latency (often exceeding 5–10 seconds) and battery exhaustion. TrueShield AI addresses this critical trade-off through a decoupled hybrid architecture, executing lightweight lexical matching directly at the edge while streaming segmented conversational tokens to a cloud-based LLM engine bounded by strict timeout watchdogs."
     )
 
     # =========================================================================
     # SECTION III: PROPOSED SYSTEM ARCHITECTURE & METHODOLOGY
     # =========================================================================
-    add_sec_heading("III. PROPOSED VOXSHIELD AI ARCHITECTURE")
+    add_sec_heading("III. PROPOSED TRUESHIELD AI ARCHITECTURE")
     add_p(
-        "The architectural design of VoxShield AI is engineered around three non-negotiable operational principles: (1) Real-time Responsiveness: Threat indicators must be evaluated within a 2-second moving window; (2) Robust Fault Tolerance: Network packet loss or API delays must never incapacitate client-side monitoring; and (3) Zero-Trust Privacy: Raw voice recordings must never be permanently retained or stored on disk."
+        "The architectural design of TrueShield AI is engineered around three non-negotiable operational principles: (1) Real-time Responsiveness: Threat indicators must be evaluated within a 2-second moving window; (2) Robust Fault Tolerance: Network packet loss or API delays must never incapacitate client-side monitoring; and (3) Zero-Trust Privacy: Raw voice recordings must never be permanently retained or stored on disk."
     )
     add_p(
         "As illustrated in Fig. 2, the end-to-end processing pipeline comprises four primary structural tiers: (i) Acoustic Ingestion & Streaming ASR Layer, (ii) Dual-Engine Hybrid Analysis Pipeline, (iii) Threat Arbitration & Decision Core, and (iv) Real-Time Telemetry HUD & Cloud Persistence."
     )
 
     # Embed Figure 1
-    add_figure_image(fig1_path, 2, "End-to-End System Architecture of VoxShield AI, illustrating streaming ASR ingestion, parallel dual-engine lexical and LLM semantic evaluation, watchdog circuit-breaker, and live HUD telemetry.", width_in=6.4)
+    add_figure_image(fig1_path, 2, "End-to-End System Architecture of TrueShield AI, illustrating streaming ASR ingestion, parallel dual-engine lexical and LLM semantic evaluation, watchdog circuit-breaker, and live HUD telemetry.", width_in=6.4)
 
     add_subsec_heading("A. Tier 1: Real-Time Audio Capture & Streaming ASR")
     add_p(
@@ -284,7 +284,7 @@ def create_research_paper():
 
     add_subsec_heading("B. Tier 2: Dual-Engine Hybrid Scam Analysis Pipeline")
     add_p(
-        "Rather than relying solely on a cloud LLM or a static keyword filter, VoxShield AI forks the sanitized transcript T simultaneously into two complementary, asynchronous analysis branches:"
+        "Rather than relying solely on a cloud LLM or a static keyword filter, TrueShield AI forks the sanitized transcript T simultaneously into two complementary, asynchronous analysis branches:"
     )
     add_p(
         "1) Branch A: Deterministic Rule-Based Heuristic Matcher: Executing entirely client-side or within a local server worker, this engine matches the transcript against a heavily weighted lexicon of 95+ known fraud markers. Each matched keyword contributes a predefined threat weight. The engine executes in under 5 milliseconds with zero network latency, providing an instantaneous baseline defense against direct, explicit scams (e.g., callers explicitly soliciting OTPs, CVVs, or AnyDesk installations)."
@@ -299,7 +299,7 @@ def create_research_paper():
     )
 
     # Embed Figure 2
-    add_figure_image(fig2_path, 3, "Real-time call monitoring execution workflow and decision state machine in VoxShield AI, showing the continuous stream loop, circuit-breaker fallback, and tri-tier threshold routing.", width_in=5.8)
+    add_figure_image(fig2_path, 3, "Real-time call monitoring execution workflow and decision state machine in TrueShield AI, showing the continuous stream loop, circuit-breaker fallback, and tri-tier threshold routing.", width_in=5.8)
 
     add_subsec_heading("D. Tier 4: Live Threat HUD & Cloud Telemetry")
     add_p(
@@ -311,7 +311,7 @@ def create_research_paper():
     # =========================================================================
     add_sec_heading("IV. MATHEMATICAL FORMULATION & RISK ARBITRATION")
     add_p(
-        "To provide rigorous algorithmic transparency, the threat determination mechanism in VoxShield AI is formalized mathematically."
+        "To provide rigorous algorithmic transparency, the threat determination mechanism in TrueShield AI is formalized mathematically."
     )
 
     add_subsec_heading("A. Lexical Heuristic Scoring Formulation")
@@ -353,7 +353,7 @@ def create_research_paper():
         "S_AI* = S_AI if (Delta_t <= 6000 ms and status == SUCCESS) else S_rule     (4)"
     )
     add_p(
-        "To eliminate false negatives on unambiguous high-critical threats (where a scammer explicitly demands an OTP or screen share), VoxShield AI implements a Maximum-Pooling Fusion Operator:"
+        "To eliminate false negatives on unambiguous high-critical threats (where a scammer explicitly demands an OTP or screen share), TrueShield AI implements a Maximum-Pooling Fusion Operator:"
     )
     add_p(
         "S_final = max( S_rule, S_AI* )     (5)"
@@ -416,11 +416,11 @@ def create_research_paper():
     # =========================================================================
     add_sec_heading("V. SCAM THREAT TAXONOMY & COGNITIVE VECTORS")
     add_p(
-        "To systematically model social engineering deception, VoxShield AI implements an eight-class threat ontology reflecting prevailing cybercrime methodologies observed in real-world telecommunication forensic investigations."
+        "To systematically model social engineering deception, TrueShield AI implements an eight-class threat ontology reflecting prevailing cybercrime methodologies observed in real-world telecommunication forensic investigations."
     )
 
     # Embed Figure 4
-    add_figure_image(fig4_path, 5, "Hierarchical taxonomy of phone scam threat vectors modeled in VoxShield AI, detailing lexical weights, psychological hallmarks, and regional Hinglish coercion indicators.", width_in=6.4)
+    add_figure_image(fig4_path, 5, "Hierarchical taxonomy of phone scam threat vectors modeled in TrueShield AI, detailing lexical weights, psychological hallmarks, and regional Hinglish coercion indicators.", width_in=6.4)
 
     add_subsec_heading("A. Taxonomy Classifications")
     add_p(
@@ -453,7 +453,7 @@ def create_research_paper():
     p_tbl_lbl.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_tbl_lbl.paragraph_format.space_before = Pt(8)
     p_tbl_lbl.paragraph_format.space_after = Pt(4)
-    r_tbold = p_tbl_lbl.add_run("TABLE I: REPRESENTATIVE LEXICAL WEIGHTS IN VOXSHIELD SCAM TAXONOMY")
+    r_tbold = p_tbl_lbl.add_run("TABLE I: REPRESENTATIVE LEXICAL WEIGHTS IN TRUESHIELD SCAM TAXONOMY")
     r_tbold.font.bold = True
     r_tbold.font.size = Pt(9.5)
 
@@ -503,7 +503,7 @@ def create_research_paper():
     # =========================================================================
     add_sec_heading("VI. SYSTEM IMPLEMENTATION & EXPERIMENTAL EVALUATION")
     add_p(
-        "VoxShield AI is implemented as a modern Progressive Web Application (PWA) using TanStack Start (full-stack React SSR/Server Functions), Vite, Tailwind CSS, and Framer Motion. The speech pipeline integrates Web Speech ASR natively with multi-dialect support. Cloud persistence and real-time history streaming utilize Supabase (PostgreSQL with Row Level Security). AI reasoning is executed through Google Gemini 1.5 Flash via Lovable AI Gateway endpoints."
+        "TrueShield AI is implemented as a modern Progressive Web Application (PWA) using TanStack Start (full-stack React SSR/Server Functions), Vite, Tailwind CSS, and Framer Motion. The speech pipeline integrates Web Speech ASR natively with multi-dialect support. Cloud persistence and real-time history streaming utilize Supabase (PostgreSQL with Row Level Security). AI reasoning is executed through Google Gemini 1.5 Flash via Lovable AI Gateway endpoints."
     )
 
     add_subsec_heading("A. Evaluation Methodology and Dataset")
@@ -544,7 +544,7 @@ def create_research_paper():
         ("Static Caller-ID Filter (Baseline)", "38.2%", "44.0%", "31.5%", "36.7%"),
         ("Standalone Rule Matcher (Engine A)", "74.6%", "88.2%", "68.4%", "77.1%"),
         ("Standalone Gemini 1.5 Flash (Engine B)", "89.4%", "91.5%", "87.0%", "89.2%"),
-        ("VoxShield AI (Hybrid Max-Pooling)", "94.2%", "95.8%", "93.1%", "94.4%"),
+        ("TrueShield AI (Hybrid Max-Pooling)", "94.2%", "95.8%", "93.1%", "94.4%"),
     ]
 
     for row_idx, row_data in enumerate(t2_data):
@@ -563,7 +563,7 @@ def create_research_paper():
                     r.font.bold = True
 
     add_p(
-        "The standalone static caller-ID baseline achieves an abysmal 38.2% accuracy due to pervasive number spoofing. While the deterministic lexical matcher achieves high precision (88.2%), its recall is constrained (68.4%) because subtle social engineering scripts avoid explicit blacklisted words. Conversely, VoxShield AI's hybrid max-pooling fusion achieves an overall accuracy of 94.2% and F1-score of 94.4%, successfully intercepting both crude keyword demands and complex, deceptive conversational pretexts."
+        "The standalone static caller-ID baseline achieves an abysmal 38.2% accuracy due to pervasive number spoofing. While the deterministic lexical matcher achieves high precision (88.2%), its recall is constrained (68.4%) because subtle social engineering scripts avoid explicit blacklisted words. Conversely, TrueShield AI's hybrid max-pooling fusion achieves an overall accuracy of 94.2% and F1-score of 94.4%, successfully intercepting both crude keyword demands and complex, deceptive conversational pretexts."
     )
 
     add_subsec_heading("C. Latency Profile and Resource Utilization")
@@ -571,7 +571,7 @@ def create_research_paper():
         "To satisfy the 2-second real-time alert requirement, latency profiling was conducted across 200 active call turns. On average, Web Speech ASR transcription latency accounts for 450 ms, client-side sliding window aggregation requires 30 ms, heuristic lexical matching executes in 3.8 ms, and Gemini 1.5 Flash structured tool calling consumes 920 ms (network RTT + generation). The mean end-to-end processing latency is 1403.8 ms (1.40 seconds), comfortably below the 2.0-second real-time threshold. During synthetic network dropouts, the circuit breaker triggers at 6000 ms, instantly falling back to the 3.8 ms rule engine without crashing the UI."
     )
     add_p(
-        "Client device telemetry measured on a mid-tier Android device (Snapdragon 778G, 6GB RAM) showed that VoxShield AI consumes less than 4.5% incremental CPU load and under 42 MB of memory during active monitoring, ensuring negligible impact on battery longevity."
+        "Client device telemetry measured on a mid-tier Android device (Snapdragon 778G, 6GB RAM) showed that TrueShield AI consumes less than 4.5% incremental CPU load and under 42 MB of memory during active monitoring, ensuring negligible impact on battery longevity."
     )
 
     # =========================================================================
@@ -579,7 +579,7 @@ def create_research_paper():
     # =========================================================================
     add_sec_heading("VII. ETHICAL CONSIDERATIONS & PRIVACY ARCHITECTURE")
     add_p(
-        "Because real-time conversational analysis interacts with active acoustic communication, strict adherence to cybersecurity privacy standards and legal mandates (such as India's Digital Personal Data Protection Act and GDPR principles) is foundational to VoxShield AI's design:"
+        "Because real-time conversational analysis interacts with active acoustic communication, strict adherence to cybersecurity privacy standards and legal mandates (such as India's Digital Personal Data Protection Act and GDPR principles) is foundational to TrueShield AI's design:"
     )
     add_p(
         "1) Explicit User Initiation: The monitoring engine is strictly opt-in. The acoustic transducer is never activated in the background without explicit user engagement (tapping 'Start Monitoring' or configuring automatic prompts for unsaved incoming numbers)."
@@ -596,7 +596,7 @@ def create_research_paper():
     # =========================================================================
     add_sec_heading("VIII. CONCLUSION & FUTURE DIRECTIONS")
     add_p(
-        "This paper presented VoxShield AI, a novel, explainable cybersecurity defense platform designed to protect mobile subscribers against voice phishing and telephonic social engineering in real time. By abandoning static caller-ID blacklists in favor of dynamic conversational semantic analysis, VoxShield AI bridges the critical gap between post-incident forensic auditing and active financial protection. Combining an ultra-fast deterministic lexical scanner with the cognitive reasoning capabilities of Google Gemini 1.5 Flash via a max-pooling arbitration core, the system achieves 85%–95% scam detection accuracy with sub-1.85-second end-to-end response latency."
+        "This paper presented TrueShield AI, a novel, explainable cybersecurity defense platform designed to protect mobile subscribers against voice phishing and telephonic social engineering in real time. By abandoning static caller-ID blacklists in favor of dynamic conversational semantic analysis, TrueShield AI bridges the critical gap between post-incident forensic auditing and active financial protection. Combining an ultra-fast deterministic lexical scanner with the cognitive reasoning capabilities of Google Gemini 1.5 Flash via a max-pooling arbitration core, the system achieves 85%–95% scam detection accuracy with sub-1.85-second end-to-end response latency."
     )
     add_p(
         "Future research will advance along three trajectories: (1) Telephony-Level Edge Audio Stacks: Developing native Android/iOS telecommunication driver extensions to inspect incoming voice channels directly without requiring speakerphone acoustics; (2) Deepfake Audio Detection: Integrating lightweight edge-based spectrogram analysis to detect synthetic AI-cloned voices and deepfake voice conversion attacks in real time; and (3) Multilingual Cross-Attention: Expanding the vernacular lexical ontology to support real-time code-mixed regional Indian dialects including Marathi, Tamil, Telugu, and Bengali."
@@ -663,7 +663,7 @@ def create_research_paper():
         r.font.color.rgb = RGBColor(0x33, 0x41, 0x55)
 
     # Output file paths
-    output_filename = "VoxShield_AI_Research_Paper.docx"
+    output_filename = "TrueShield_AI_Research_Paper.docx"
     target_path = os.path.join(assets_dir, output_filename)
     root_path = os.path.abspath(output_filename)
 
