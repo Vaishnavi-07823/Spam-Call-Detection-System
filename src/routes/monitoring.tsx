@@ -59,7 +59,9 @@ function MonitoringPage() {
 
   // Call simulator states
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
-  const [simulatorMode, setSimulatorMode] = useState<"bot" | "safe_bot" | "user_scammer">("bot");
+  const [simulatorMode, setSimulatorMode] = useState<"bot" | "user_scammer">("bot");
+  const [branchChoice, setBranchChoice] = useState<"pending" | "suspicious" | "genuine">("pending");
+  const branchChoiceRef = useRef<"pending" | "suspicious" | "genuine">("pending");
   const [callState, setCallState] = useState<"ringing" | "connected" | "interrupted" | "ended">("ringing");
   const [callDuration, setCallDuration] = useState(0);
   const [activeTurnIndex, setActiveTurnIndex] = useState(0);
@@ -163,18 +165,18 @@ function MonitoringPage() {
     return otherVoice || availableVoices[0] || null;
   }, [availableVoices, femaleVoice]);
 
-  // Simulated 2-Way Turn-by-Turn Hindi Phone Conversation (Spammer Male vs Victim Girl)
-  const SIMULATED_CONVERSATION = useMemo(
+  // 1. Shared Neutral Opening Line (Bank Service Desk Introduction)
+  const SHARED_OPENING = useMemo(
     () => [
       {
         speaker: "Scammer" as const,
-        speakerName: "Rajesh Sharma (SBI Security Desk)",
+        speakerName: "Rajesh Sharma (SBI Service Desk)",
         gender: "male" as const,
-        role: "Caller (Bank Scammer)",
-        hindi: "Namaste madam! Main State Bank of India Mumbai Head Office se Rajesh Sharma bol raha hoon. Kya meri baat account holder se ho rahi hai?",
-        english: "Hello madam! I am Rajesh Sharma calling from SBI Mumbai Head Office. Am I speaking with the account holder?",
-        risk: 12,
-        status: "Safe Initial Contact",
+        role: "Caller (Bank Service Team)",
+        hindi: "Namaste madam! Main State Bank of India Mumbai Service Support desk se Rajesh Sharma bol raha hoon. Kya meri baat account holder se ho rahi hai?",
+        english: "Hello madam! I am Rajesh Sharma calling from SBI Mumbai Service Support desk. Am I speaking with the account holder?",
+        risk: 8,
+        status: "Neutral Bank Inquiry",
         pitch: 0.88,
         rate: 0.98,
       },
@@ -182,21 +184,28 @@ function MonitoringPage() {
         speaker: "You" as const,
         speakerName: "Account Holder (You)",
         gender: "female" as const,
-        role: "You (Target)",
+        role: "You (Account Holder)",
         hindi: "Haan ji namaste sir. Ji boliye, main account holder hi bol rahi hoon. Kahiye kya kaam tha?",
-        english: "Yes hello sir. Yes, I am the account holder. How can I help you?",
-        risk: 12,
-        status: "Safe Conversation",
+        english: "Yes hello sir. Yes, I am the account holder. Please tell me what this is regarding?",
+        risk: 8,
+        status: "Neutral Opening Acknowledged",
         pitch: 1.10,
         rate: 0.96,
       },
+    ],
+    []
+  );
+
+  // 2. Branch A: Caller turns suspicious (Scam, Urgency, KYC Freeze Threat, OTP Demand & Auto-Cut)
+  const SUSPICIOUS_BRANCH = useMemo(
+    () => [
       {
         speaker: "Scammer" as const,
-        speakerName: "Rajesh Sharma (SBI Security Desk)",
+        speakerName: "Rajesh Sharma (SBI Service Desk)",
         gender: "male" as const,
         role: "Caller (Bank Scammer)",
-        hindi: "Madam, aapka SBI Global debit card pichle do saal se active hai na? Bank security update ke liye bas ek routine verification chal raha hai.",
-        english: "Madam, your SBI Global debit card has been active for 2 years, right? This is a routine bank database update verification.",
+        hindi: "Madam, aapka SBI debit card pichle do saal se active hai na? Bank security update ke liye bas ek routine verification chal raha hai.",
+        english: "Madam, your SBI debit card has been active for 2 years, right? This is a routine bank database update verification.",
         risk: 24,
         status: "Trust Building & Verification Claim",
         pitch: 0.88,
@@ -216,7 +225,7 @@ function MonitoringPage() {
       },
       {
         speaker: "Scammer" as const,
-        speakerName: "Rajesh Sharma (SBI Security Desk)",
+        speakerName: "Rajesh Sharma (SBI Service Desk)",
         gender: "male" as const,
         role: "Caller (Bank Scammer)",
         hindi: "Ji madam! Naye RBI guidelines ke mutabik agar aaj raat 12 baje se pehle aapka e-KYC update nahi hua, toh aapka khata aur debit card permanently freeze ho jayega!",
@@ -240,7 +249,7 @@ function MonitoringPage() {
       },
       {
         speaker: "Scammer" as const,
-        speakerName: "Rajesh Sharma (SBI Security Desk)",
+        speakerName: "Rajesh Sharma (SBI Service Desk)",
         gender: "male" as const,
         role: "Caller (Bank Scammer)",
         hindi: "Nahi madam! Kal tak der ho jayegi, server lock ho jayega! Hum direct helpline se unblock kar rahe hain. Maine aapke phone par 6-digit OTP bheja hai, turant apna OTP aur PIN batayein warna police complaint hogi aur khata band!",
@@ -250,46 +259,34 @@ function MonitoringPage() {
         pitch: 0.88,
         rate: 1.02,
       },
+      {
+        speaker: "You" as const,
+        speakerName: "Account Holder (You)",
+        gender: "female" as const,
+        role: "You (Target)",
+        hindi: "Nahi sir, main apna bank OTP aur PIN kisi se share nahi kar sakti! Yeh fraud lag raha hai!",
+        english: "No sir, I will never share my bank OTP or PIN with anyone! This feels fraudulent!",
+        risk: 95,
+        status: "🚨 Scammer Auto-Muted & Cut by TrueShield AI",
+        pitch: 1.10,
+        rate: 0.96,
+      },
     ],
     []
   );
 
-  // Simulated 2-Way Turn-by-Turn Safe Routine Phone Conversation (Delivery Courier vs Customer)
-  const SAFE_CONVERSATION = useMemo(
+  // 3. Branch B: Caller stays genuine (Routine Communication Address/Email Confirmation, Ends Safe)
+  const GENUINE_BRANCH = useMemo(
     () => [
       {
         speaker: "Scammer" as const,
-        speakerName: "Amit Verma (BlueDart Courier)",
+        speakerName: "Rajesh Sharma (SBI Service Desk)",
         gender: "male" as const,
-        role: "Caller (Delivery Associate)",
-        hindi: "Namaste ma'am! Main BlueDart courier se Amit bol raha hoon. Kya aapka delivery package receive karne ke liye aap ghar par hain?",
-        english: "Hello ma'am! This is Amit from BlueDart courier. Are you available at home to receive your package delivery?",
-        risk: 5,
-        status: "Routine Delivery Inquiry",
-        pitch: 0.95,
-        rate: 1.0,
-      },
-      {
-        speaker: "You" as const,
-        speakerName: "Account Holder (You)",
-        gender: "female" as const,
-        role: "You (Customer)",
-        hindi: "Haan ji bhaiya, main ghar par hi hoon. Kab tak delivery karenge?",
-        english: "Yes, I am at home right now. By what time will you arrive?",
-        risk: 5,
-        status: "Normal Routine Response",
-        pitch: 1.10,
-        rate: 0.96,
-      },
-      {
-        speaker: "Scammer" as const,
-        speakerName: "Amit Verma (BlueDart Courier)",
-        gender: "male" as const,
-        role: "Caller (Delivery Associate)",
-        hindi: "Ma'am main bas 10 se 15 minute mein aapki building ke main gate par pahunch raha hoon. Prepaid order hai, koi payment nahi deni.",
-        english: "Ma'am, I will reach your building's main gate in about 10 to 15 minutes. It is a prepaid order, no payment needed.",
+        role: "Caller (Bank Representative)",
+        hindi: "Madam, hum bas aapke registered branch communication address aur email ka routine annual confirmation lena chahte the. Koi personal banking info nahi chahiye.",
+        english: "Madam, we just wanted to confirm your registered communication address and email for routine records. No personal banking info is needed.",
         risk: 6,
-        status: "Prepaid Delivery Confirmed",
+        status: "Routine Record Confirmation",
         pitch: 0.95,
         rate: 1.0,
       },
@@ -297,23 +294,23 @@ function MonitoringPage() {
         speaker: "You" as const,
         speakerName: "Account Holder (You)",
         gender: "female" as const,
-        role: "You (Customer)",
-        hindi: "Theek hai bhaiya, main security guard ko inform kar deti hoon. Aap wahan parcel drop kar sakte hain.",
-        english: "Alright, I will inform the security guard. You can safely drop the parcel with them.",
+        role: "You (Account Holder)",
+        hindi: "Haan ji, mera registered address aur email dono updated hain. Sab theek chal raha hai.",
+        english: "Yes, my registered address and email are both up to date. Everything is working fine.",
         risk: 5,
-        status: "Safe Delivery Instructions",
+        status: "Routine Customer Confirmation",
         pitch: 1.10,
         rate: 0.96,
       },
       {
         speaker: "Scammer" as const,
-        speakerName: "Amit Verma (BlueDart Courier)",
+        speakerName: "Rajesh Sharma (SBI Service Desk)",
         gender: "male" as const,
-        role: "Caller (Delivery Associate)",
-        hindi: "Ji ma'am bilkul, main guard ke paas entry karke parcel submit kar deta hoon. Seedhe security guard ko handover kar dunga. Have a nice day!",
-        english: "Sure ma'am, I will register with the guard and leave the parcel there. Handing over directly to security. Have a nice day!",
+        role: "Caller (Bank Representative)",
+        hindi: "Bahut badhiya madam, aapka confirmation record ho gaya hai. Yaad rahe bank kabhi aapse phone par confidential details nahi maangta. Have a great day!",
+        english: "Excellent madam, your confirmation is recorded. Remember your bank never calls asking for confidential details. Have a wonderful day!",
         risk: 5,
-        status: "Safe Conversation Complete",
+        status: "Safe Call Completed",
         pitch: 0.95,
         rate: 1.0,
       },
@@ -321,11 +318,11 @@ function MonitoringPage() {
         speaker: "You" as const,
         speakerName: "Account Holder (You)",
         gender: "female" as const,
-        role: "You (Customer)",
-        hindi: "Shukriya bhaiya, safe delivery ke liye dhanyawad. Have a good day.",
-        english: "Thank you so much, appreciate the safe delivery. Have a good day.",
+        role: "You (Account Holder)",
+        hindi: "Shukriya sir, confirm karne ke liye dhanyawad. Have a good day.",
+        english: "Thank you sir, appreciate the routine confirmation. Have a good day.",
         risk: 4,
-        status: "Safe Call Terminated Normally",
+        status: "Call Concluded Normally",
         pitch: 1.10,
         rate: 0.96,
       },
@@ -333,10 +330,13 @@ function MonitoringPage() {
     []
   );
 
-  // Active dialogue script based on selected demo
+  // Active dialogue script based on current branch
   const activeConversation = useMemo(() => {
-    return simulatorMode === "safe_bot" ? SAFE_CONVERSATION : SIMULATED_CONVERSATION;
-  }, [simulatorMode, SAFE_CONVERSATION, SIMULATED_CONVERSATION]);
+    if (branchChoice === "genuine") {
+      return [...SHARED_OPENING, ...GENUINE_BRANCH];
+    }
+    return [...SHARED_OPENING, ...SUSPICIOUS_BRANCH];
+  }, [branchChoice, SHARED_OPENING, GENUINE_BRANCH, SUSPICIOUS_BRANCH]);
 
   // Active simulated dialogue turn
   const currentTurn = useMemo(() => {
@@ -503,9 +503,11 @@ function MonitoringPage() {
   };
 
   /** Open Simulator & Start Ringtone */
-  const openSimulator = (mode: "bot" | "safe_bot" | "user_scammer" = "bot") => {
+  const openSimulator = (mode: "bot" | "user_scammer" = "bot") => {
     resetTranscript();
     setSimulatorMode(mode);
+    setBranchChoice("pending");
+    branchChoiceRef.current = "pending";
     setIsSimulatorOpen(true);
     setCallState("ringing");
     setCallDuration(0);
@@ -557,17 +559,30 @@ function MonitoringPage() {
 
   /** Play next dialogue turn in the 2-way conversation */
   const playTurn = useCallback(
-    (index: number) => {
-      if (index >= activeConversation.length) {
-        const fullTranscript = activeConversation.map(
-          (t) => `${t.speakerName}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`
-        ).join("\n");
+    (index: number, chosenBranch?: "suspicious" | "genuine") => {
+      const currentBranch = chosenBranch || branchChoiceRef.current;
+
+      // If opening lines (turn 0 caller, turn 1 victim) finished and operator hasn't chosen a branch yet, pause and wait for choice!
+      if (index === 2 && currentBranch === "pending") {
+        setActiveTurnIndex(1);
+        return;
+      }
+
+      const conversation =
+        currentBranch === "genuine"
+          ? [...SHARED_OPENING, ...GENUINE_BRANCH]
+          : [...SHARED_OPENING, ...SUSPICIOUS_BRANCH];
+
+      if (index >= conversation.length) {
+        const fullTranscript = conversation
+          .map((t) => `${t.speakerName}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`)
+          .join("\n");
         closeSimulator();
         handleAnalyze(fullTranscript, `sim_session_${Date.now()}`, true);
         return;
       }
 
-      const turn = activeConversation[index];
+      const turn = conversation[index];
       setActiveTurnIndex(index);
       const textToSpeak = selectedLang === "hi-IN" ? turn.hindi : turn.english;
 
@@ -586,8 +601,9 @@ function MonitoringPage() {
       // When the scammer reaches high risk (OTP / Police threat demand, risk >= 90%),
       // TrueShield AI automatically mutes the scammer and disconnects the call mid-sentence!
       // (Normal safe calls never trigger this and conclude gracefully)
-      if (simulatorMode === "bot" && turn.risk >= 90) {
-        const fullTranscriptSoFar = activeConversation.slice(0, index + 1)
+      if (simulatorMode === "bot" && currentBranch === "suspicious" && turn.risk >= 90) {
+        const fullTranscriptSoFar = conversation
+          .slice(0, index + 1)
           .map((t) => `${t.speakerName}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`)
           .join("\n");
 
@@ -632,7 +648,29 @@ function MonitoringPage() {
         }, 3000);
       }
     },
-    [activeConversation, simulatorMode, selectedLang, femaleVoice, maleVoice, handleAnalyze, triggerProtectiveCallCut]
+    [
+      SHARED_OPENING,
+      SUSPICIOUS_BRANCH,
+      GENUINE_BRANCH,
+      simulatorMode,
+      selectedLang,
+      femaleVoice,
+      maleVoice,
+      closeSimulator,
+      handleAnalyze,
+      triggerProtectiveCallCut,
+    ]
+  );
+
+  /** Operator manually selects which branch to unfold after neutral opening */
+  const selectBranch = useCallback(
+    (choice: "suspicious" | "genuine") => {
+      setBranchChoice(choice);
+      branchChoiceRef.current = choice;
+      clearTimeout(simulatorTimerRef.current);
+      playTurn(2, choice);
+    },
+    [playTurn]
   );
 
   /** Voice Response Synthesizer for AI Victim (Girl Voice) */
@@ -866,10 +904,12 @@ function MonitoringPage() {
 
   /** Instant fast-forward to scam alert with protective call-cut */
   const handleSkipToScam = () => {
+    setBranchChoice("suspicious");
+    branchChoiceRef.current = "suspicious";
     const threatText =
       selectedLang === "hi-IN"
-        ? "Rajesh Sharma (SBI Security Desk): Namaste, SBI bank se bol rahe hain. Aapka khata aur card block ho gaya hai. Turant 6-digit OTP bataiye warna police case aur khata band hoga!"
-        : "Rajesh Sharma (SBI Security Desk): Hello, this is State Bank fraud team. Your card is blocked. Give your 6-digit OTP right now or face police arrest and account freeze!";
+        ? "Rajesh Sharma (SBI Service Support): Namaste, SBI bank se bol rahe hain. Aapka khata aur card block ho gaya hai. Turant 6-digit OTP bataiye warna police case aur khata band hoga!"
+        : "Rajesh Sharma (SBI Service Support): Hello, this is State Bank support team. Your card is blocked. Give your 6-digit OTP right now or face police arrest and account freeze!";
 
     triggerProtectiveCallCut(threatText);
   };
@@ -1003,20 +1043,23 @@ function MonitoringPage() {
               <div className="w-full pt-3 border-t border-border/40 flex flex-col gap-2">
                 <Button
                   variant="outline"
-                  className="w-full text-xs h-11 font-bold border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 gap-2 shadow-sm transition-all hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                  className="w-full text-xs h-auto py-2.5 px-3 font-bold border-primary/50 bg-primary/10 hover:bg-primary/20 text-blue-200 gap-2.5 shadow-sm transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.25)] flex items-center justify-between text-left"
                   onClick={() => openSimulator("bot")}
                 >
-                  <Phone className="h-4 w-4 animate-bounce" />
-                  📞 1. Scam Call Demo (Auto 2-Way Bot)
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full text-xs h-11 font-bold border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 gap-2 shadow-sm transition-all hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                  onClick={() => openSimulator("safe_bot")}
-                >
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                  🛡️ 2. Try Safe Call Demo (Routine Delivery)
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0">
+                      <Phone className="h-4 w-4 text-primary animate-bounce" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-white">📞 1. Live Call Demo (Interactive 2-Branch)</span>
+                      <span className="text-[10px] text-blue-300/80 font-normal">
+                        Shared neutral opening ➔ Choose Suspicious vs Genuine live
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/20 text-blue-300 font-bold uppercase tracking-wider shrink-0">
+                    2 Branches
+                  </span>
                 </Button>
 
                 <Button
@@ -1024,7 +1067,7 @@ function MonitoringPage() {
                   onClick={() => openSimulator("user_scammer")}
                 >
                   <PhoneCall className="h-4 w-4 animate-pulse" />
-                  🎙️ 3. Live Roleplay: You Call as Scammer
+                  🎙️ 2. Live Roleplay: You Call as Scammer
                 </Button>
               </div>
 
@@ -1297,22 +1340,14 @@ function MonitoringPage() {
 
                   {/* Caller Photo Avatar with Ringing Pulse */}
                   <div className="relative mb-5">
-                    <div className="w-28 h-28 rounded-full bg-red-500/20 flex items-center justify-center animate-ping absolute inset-0" />
+                    <div className="w-28 h-28 rounded-full bg-blue-500/20 flex items-center justify-center animate-ping absolute inset-0" />
                     <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-slate-700 p-1 flex items-center justify-center shadow-2xl relative">
                       <div className="w-full h-full rounded-full bg-slate-900 flex flex-col items-center justify-center text-center">
                         <span className="text-3xl">
-                          {simulatorMode === "safe_bot"
-                            ? "📦"
-                            : simulatorMode === "user_scammer"
-                              ? "👩"
-                              : "👨‍💼"}
+                          {simulatorMode === "user_scammer" ? "👩" : "👨‍💼"}
                         </span>
                         <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-tight mt-0.5">
-                          {simulatorMode === "safe_bot"
-                            ? "BLUEDART COURIER"
-                            : simulatorMode === "user_scammer"
-                              ? "PRIYA SHARMA"
-                              : "SBI SECURITY"}
+                          {simulatorMode === "user_scammer" ? "PRIYA SHARMA" : "SBI SERVICE DESK"}
                         </span>
                       </div>
                     </div>
@@ -1320,45 +1355,25 @@ function MonitoringPage() {
 
                   {/* Caller Information */}
                   <h2 className="text-2xl font-black tracking-tight text-white">
-                    {simulatorMode === "safe_bot"
-                      ? "Amit Verma (Delivery Courier)"
-                      : simulatorMode === "user_scammer"
-                        ? "Priya Sharma (Victim)"
-                        : "SBI Security Department"}
+                    {simulatorMode === "user_scammer"
+                      ? "Priya Sharma (Victim)"
+                      : "SBI Service Support Desk"}
                   </h2>
                   <p className="text-xs font-semibold text-cyan-300 mt-0.5">
-                    {simulatorMode === "safe_bot"
-                      ? "Package Delivery Confirmation Partner"
-                      : simulatorMode === "user_scammer"
-                        ? "Account Holder · Answering Call..."
-                        : "Rajesh Sharma · Head Office Cyber Cell"}
+                    {simulatorMode === "user_scammer"
+                      ? "Account Holder · Answering Call..."
+                      : "Rajesh Sharma · Service & Verification"}
                   </p>
                   <p className="text-xs text-slate-400 font-mono mt-1">
-                    {simulatorMode === "safe_bot"
-                      ? "+91 98230-11048"
-                      : simulatorMode === "user_scammer"
-                        ? "+91 98451-22910"
-                        : "+91 98112-78401"}
+                    {simulatorMode === "user_scammer" ? "+91 98451-22910" : "+91 98112-78401"}
                   </p>
 
-                  <div
-                    className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold ${
-                      simulatorMode === "safe_bot"
-                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
-                        : "bg-red-500/15 border-red-500/40 text-red-400"
-                    }`}
-                  >
-                    {simulatorMode === "safe_bot" ? (
-                      <CheckCircle2 className="h-3 w-3" />
-                    ) : (
-                      <AlertTriangle className="h-3 w-3" />
-                    )}
+                  <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold bg-blue-500/15 border-blue-500/40 text-blue-300">
+                    <Shield className="h-3 w-3 text-primary" />
                     <span>
-                      {simulatorMode === "safe_bot"
-                        ? "Verified Routine Service Call — Normal Delivery"
-                        : simulatorMode === "user_scammer"
-                          ? "🎙️ You are Caller: Speak into mic to scam, ask OTP to trigger Auto-Cut!"
-                          : "Suspected Bank Impersonation / Credential Phishing"}
+                      {simulatorMode === "user_scammer"
+                        ? "🎙️ You are Caller: Speak into mic to scam, ask OTP to trigger Auto-Cut!"
+                        : "Incoming Bank Support Call · Interactive 2-Branch Simulation"}
                     </span>
                   </div>
 
@@ -1444,19 +1459,15 @@ function MonitoringPage() {
                     <div className="flex items-center gap-2 mb-0.5">
                       <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                       <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                        {simulatorMode === "safe_bot"
-                          ? "ROUTINE CALL CONNECTED (SAFE)"
-                          : simulatorMode === "user_scammer"
-                            ? "LIVE CALL: YOU ARE CALLER"
-                            : "CALL CONNECTED (HINDI)"}
+                        {simulatorMode === "user_scammer"
+                          ? "LIVE CALL: YOU ARE CALLER"
+                          : "CALL CONNECTED (BANK SUPPORT)"}
                       </span>
                     </div>
                     <h3 className="text-lg font-black text-white">
-                      {simulatorMode === "safe_bot"
-                        ? "Amit Verma (BlueDart Delivery)"
-                        : simulatorMode === "user_scammer"
-                          ? "Priya Sharma (Account Holder)"
-                          : "SBI Security Desk (Rajesh Sharma)"}
+                      {simulatorMode === "user_scammer"
+                        ? "Priya Sharma (Account Holder)"
+                        : "Rajesh Sharma (SBI Service Support)"}
                     </h3>
                     <p className="text-xs text-slate-400 font-mono">
                       {String(Math.floor(callDuration / 60)).padStart(2, "0")}:
@@ -1478,7 +1489,7 @@ function MonitoringPage() {
                           ? `🚨 CRITICAL SCAM RISK: ${currentTurn.risk}%`
                           : currentTurn.risk >= 40
                             ? `⚠️ SUSPICIOUS URGENCY: ${currentTurn.risk}%`
-                            : simulatorMode === "safe_bot"
+                            : branchChoice === "genuine"
                               ? `🛡️ VERIFIED SAFE CALL: ${currentTurn.risk}% (SAFE)`
                               : `🛡️ SCANNING CONVERSATION: ${currentTurn.risk}%`}
                       </span>
@@ -1528,28 +1539,24 @@ function MonitoringPage() {
                         >
                           <div className="flex items-center gap-1 mb-0.5 px-1">
                             <span className="text-[10px] font-bold">
-                              {simulatorMode === "safe_bot"
+                              {simulatorMode === "user_scammer"
                                 ? isScammer
-                                  ? "📦 Amit (BlueDart Courier)"
-                                  : "👩 You (Customer)"
-                                : simulatorMode === "user_scammer"
-                                  ? isScammer
-                                    ? "🎙️ You (Live Caller / Scammer)"
-                                    : "👩 Priya (Account Holder)"
-                                  : isScammer
-                                    ? "👨 Rajesh Sharma (SBI Caller)"
-                                    : "👩 You (Account Holder)"}
+                                  ? "🎙️ You (Live Caller / Scammer)"
+                                  : "👩 Priya (Account Holder)"
+                                : isScammer
+                                  ? "👨 Rajesh Sharma (SBI Caller)"
+                                  : "👩 You (Account Holder)"}
                             </span>
                             <span
                               className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
                                 isScammer
-                                  ? simulatorMode === "safe_bot"
+                                  ? branchChoice === "genuine"
                                     ? "bg-emerald-500/20 text-emerald-300"
                                     : "bg-blue-500/20 text-blue-300"
                                   : "bg-pink-500/20 text-pink-300"
                               }`}
                             >
-                              {isScammer ? (simulatorMode === "safe_bot" ? "Courier" : "Caller") : "Customer"}
+                              {isScammer ? (branchChoice === "genuine" ? "Support" : "Caller") : "Customer"}
                             </span>
                           </div>
                           <div
@@ -1564,6 +1571,83 @@ function MonitoringPage() {
                         </motion.div>
                       );
                     })}
+
+                    {/* Operator Branch Decision Box (appears after neutral opening line completes) */}
+                    {simulatorMode === "bot" && branchChoice === "pending" && activeTurnIndex >= 1 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full my-2 p-3 rounded-2xl bg-slate-900/95 border-2 border-primary/70 shadow-[0_0_25px_rgba(59,130,246,0.25)] flex flex-col gap-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black text-primary uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
+                            Operator Choice Required
+                          </span>
+                          <span className="text-[9px] px-2 py-0.5 rounded bg-primary/20 text-blue-300 font-bold">
+                            Opening Done
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-200 leading-snug">
+                          Neutral opening played. Select how this incoming bank call continues:
+                        </p>
+                        <div className="grid grid-cols-1 gap-2 mt-0.5">
+                          <button
+                            onClick={() => selectBranch("suspicious")}
+                            className="w-full text-left p-2.5 rounded-xl bg-gradient-to-r from-red-950/80 via-red-900/70 to-rose-950/80 hover:from-red-900 hover:to-rose-900 border border-red-500/70 text-white transition-all shadow-md active:scale-[0.98]"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black text-red-300 flex items-center gap-1.5">
+                                <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
+                                1. Caller turns suspicious
+                              </span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/30 text-red-200 font-bold">
+                                Scam & Auto-Cut
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-red-200/80 block mt-0.5 leading-tight">
+                              Escalating urgency, KYC freeze threat, OTP demand ➔ Siren & Auto-Cut
+                            </span>
+                          </button>
+
+                          <button
+                            onClick={() => selectBranch("genuine")}
+                            className="w-full text-left p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/80 via-emerald-900/70 to-teal-950/80 hover:from-emerald-900 hover:to-teal-900 border border-emerald-500/70 text-white transition-all shadow-md active:scale-[0.98]"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                                2. Caller stays genuine
+                              </span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/30 text-emerald-200 font-bold">
+                                Safe & No Cut
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-emerald-200/80 block mt-0.5 leading-tight">
+                              Routine record confirm, no OTP ask ➔ Ends on /safe with green gauge
+                            </span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Active Branch Telemetry Indicator */}
+                    {simulatorMode === "bot" && branchChoice !== "pending" && (
+                      <div className="w-full py-1 px-2.5 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center justify-between text-[10px]">
+                        <span className="text-slate-400 font-medium">Branch Path:</span>
+                        <span
+                          className={`font-bold px-2 py-0.5 rounded text-[9px] ${
+                            branchChoice === "suspicious"
+                              ? "bg-red-500/20 text-red-300"
+                              : "bg-emerald-500/20 text-emerald-300"
+                          }`}
+                        >
+                          {branchChoice === "suspicious"
+                            ? "🚨 Suspicious Branch (High Risk / Auto-Cut)"
+                            : "🛡️ Genuine Branch (Safe / Low Risk)"}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* User-Scammer Mode: Real-Time Acoustic Feedback & Quick Roleplay Chips */}
