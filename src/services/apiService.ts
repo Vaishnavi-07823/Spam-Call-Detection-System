@@ -4,7 +4,7 @@
  * Client-side service that calls server functions for
  * scam detection and history retrieval.
  */
-import { detectScam, getDetectionHistory } from "@/services/detection.functions";
+import { detectScam, getDetectionHistory, getEngineConfigStatus } from "@/services/detection.functions";
 
 /** Result returned from the scam detection endpoint */
 export interface DetectionResult {
@@ -47,3 +47,11 @@ export async function analyzeTranscript(
 export async function fetchHistory(): Promise<HistoryItem[]> {
   return getDetectionHistory();
 }
+
+/**
+ * Checks the operational status of the hybrid AI/Rules engine
+ */
+export async function checkEngineStatus() {
+  return getEngineConfigStatus();
+}
+

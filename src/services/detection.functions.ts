@@ -142,3 +142,28 @@ export const getDetectionHistory = createServerFn({ method: "GET" }).handler(
     }));
   }
 );
+
+/**
+ * Returns telemetry and operational status of the dual-engine detection architecture
+ */
+export const getEngineConfigStatus = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const hasKey = Boolean(
+      process.env.GEMINI_API_KEY ||
+      process.env.VITE_GEMINI_API_KEY ||
+      process.env.LOVABLE_API_KEY
+    );
+    return {
+      hybridEnabled: true,
+      aiActive: hasKey,
+      engineName: hasKey
+        ? "Dual-Engine Hybrid (Edge Rules + Gemini 1.5 Flash)"
+        : "Edge Rules Only (Gemini Key Pending)",
+      tier1: "Sub-5ms Regex & Keyword Circuit Breaker (Edge)",
+      tier2: hasKey
+        ? "Google Gemini 1.5 Flash (Context Arc Analysis)"
+        : "Pending API Key in .env",
+    };
+  }
+);
+
