@@ -370,7 +370,7 @@ function MonitoringPage() {
   }, [transcript]);
 
   const handleAnalyze = useCallback(
-    async (customText?: string) => {
+    async (customText?: string, sessionId?: string, resetSession?: boolean) => {
       const textToAnalyze = (customText || transcript).trim();
       if (!textToAnalyze) return;
 
@@ -379,7 +379,7 @@ function MonitoringPage() {
       stopListening();
 
       try {
-        const result = await analyzeTranscript(textToAnalyze);
+        const result = await analyzeTranscript(textToAnalyze, sessionId, resetSession);
 
         // Navigate based on risk score threshold (>= 50 is High/Medium Threat)
         if (result.riskScore >= 50) {
@@ -504,6 +504,7 @@ function MonitoringPage() {
 
   /** Open Simulator & Start Ringtone */
   const openSimulator = (mode: "bot" | "safe_bot" | "user_scammer" = "bot") => {
+    resetTranscript();
     setSimulatorMode(mode);
     setIsSimulatorOpen(true);
     setCallState("ringing");
@@ -548,7 +549,7 @@ function MonitoringPage() {
       // 4. After 2.4 seconds of showing the auto-cut screen, navigate to the threat alert report
       setTimeout(() => {
         closeSimulator();
-        handleAnalyze(transcriptText);
+        handleAnalyze(transcriptText, `sim_session_${Date.now()}`, true);
       }, 2400);
     },
     [handleAnalyze, stopListening]
@@ -562,7 +563,7 @@ function MonitoringPage() {
           (t) => `${t.speakerName}: ${selectedLang === "hi-IN" ? t.hindi : t.english}`
         ).join("\n");
         closeSimulator();
-        handleAnalyze(fullTranscript);
+        handleAnalyze(fullTranscript, `sim_session_${Date.now()}`, true);
         return;
       }
 
