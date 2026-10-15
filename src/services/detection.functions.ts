@@ -157,11 +157,11 @@ export const getEngineConfigStatus = createServerFn({ method: "GET" }).handler(
       hybridEnabled: true,
       aiActive: hasKey,
       engineName: hasKey
-        ? "Dual-Engine Hybrid (Edge Rules + Gemini 1.5 Flash)"
+        ? "Dual-Engine Hybrid (Edge Rules + Gemini 3.8 Flash)"
         : "Edge Rules Only (Gemini Key Pending)",
       tier1: "Sub-5ms Regex & Keyword Circuit Breaker (Edge)",
       tier2: hasKey
-        ? "Google Gemini 1.5 Flash (Context Arc Analysis)"
+        ? "Google Gemini 3.8 Flash (Context Arc Analysis)"
         : "Pending API Key in .env",
     };
   }

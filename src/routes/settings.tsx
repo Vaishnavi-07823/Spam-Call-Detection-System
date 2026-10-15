@@ -257,7 +257,7 @@ function SettingsPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-0.5">Tier 2 — Cloud AI Context Analysis</p>
-                  <p className="text-xs text-foreground">{engineStatus?.tier2 ?? "Google Gemini 1.5 Flash"}</p>
+                  <p className="text-xs text-foreground">{engineStatus?.tier2 ?? "Google Gemini 3.8 Flash"}</p>
                   {engineStatus?.aiActive ? (
                     <p className="text-[10px] text-primary mt-0.5">Active · Full conversation arc scoring</p>
                   ) : (
