@@ -90,6 +90,7 @@ function RootComponent() {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
   const isConsentPage = location.pathname === "/.lovable/oauth/consent";
+  const isHomePage = location.pathname === "/";
 
   if (isLoginPage || isConsentPage) {
     return (
@@ -104,31 +105,94 @@ function RootComponent() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-background text-foreground relative selection:bg-primary/30">
-        {/* Top Floating Header for desktop & mobile */}
-        <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center shadow-[0_0_12px_rgba(59,130,246,0.35)]">
-                <span className="text-base">🛡️</span>
+      <div className="min-h-screen bg-background text-foreground relative selection:bg-primary/30 flex flex-col">
+        {/* Top Navbar matching Reference Image (VoiceGuard style) */}
+        <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#070D1F]/90 backdrop-blur-xl text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            {/* Brand Logo with Soundwave Icon */}
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="flex items-center gap-0.5 h-6 px-1">
+                <span className="w-1 h-3.5 bg-blue-500 rounded-full group-hover:h-5 transition-all" />
+                <span className="w-1 h-5 bg-blue-400 rounded-full group-hover:h-3 transition-all" />
+                <span className="w-1 h-6 bg-blue-500 rounded-full group-hover:h-6 transition-all" />
+                <span className="w-1 h-4 bg-cyan-400 rounded-full group-hover:h-5 transition-all" />
+                <span className="w-1 h-2.5 bg-blue-500 rounded-full group-hover:h-4 transition-all" />
               </div>
-              <span className="font-extrabold tracking-tight text-base sm:text-lg">
-                True<span className="text-primary">Shield</span> <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 font-bold ml-1">AI</span>
-              </span>
+              <div className="flex flex-col">
+                <span className="font-extrabold text-base tracking-tight text-white leading-none">
+                  Voice<span className="text-blue-500">Guard</span>
+                </span>
+                <span className="text-[9px] text-slate-400 tracking-wider uppercase mt-0.5 font-medium">
+                  Live Call Detection System
+                </span>
+              </div>
             </Link>
 
+            {/* Desktop Center Navigation Links */}
+            <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-300">
+              <Link
+                to="/"
+                className="hover:text-blue-400 transition-colors"
+                activeProps={{ className: "text-blue-400 font-bold" }}
+              >
+                Home
+              </Link>
+              <Link
+                to="/monitoring"
+                className="hover:text-blue-400 transition-colors"
+                activeProps={{ className: "text-blue-400 font-bold" }}
+              >
+                Live Calls
+              </Link>
+              <Link
+                to="/upload"
+                className="hover:text-blue-400 transition-colors"
+                activeProps={{ className: "text-blue-400 font-bold" }}
+              >
+                Transcripts
+              </Link>
+              <Link
+                to="/history"
+                className="hover:text-blue-400 transition-colors"
+                activeProps={{ className: "text-blue-400 font-bold" }}
+              >
+                Detections
+              </Link>
+              <Link
+                to="/settings"
+                className="hover:text-blue-400 transition-colors"
+                activeProps={{ className: "text-blue-400 font-bold" }}
+              >
+                Settings
+              </Link>
+            </nav>
+
+            {/* Right Side Actions */}
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Live Shield Active
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Shield Active
               </div>
+
+              <Link to="/login">
+                <button className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
+                  Login
+                </button>
+              </Link>
+
+              <Link to="/monitoring">
+                <button className="text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-xl shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                  Start Live Call
+                </button>
+              </Link>
+
               <ThemeToggle />
             </div>
           </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="max-w-5xl mx-auto pb-24">
+        <main className={`flex-1 w-full ${isHomePage ? "p-0" : "max-w-5xl mx-auto px-4 sm:px-6 py-6 pb-24"}`}>
           <Outlet />
         </main>
 
