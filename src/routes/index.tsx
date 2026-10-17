@@ -23,11 +23,11 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "VoiceGuard AI — Live Call Detection System" },
+      { title: "TrueShield AI — Real-Time Scam Call Detection" },
       {
         name: "description",
         content:
-          "Our AI-powered system monitors live calls in real-time, detects suspicious activity, and converts conversations into text for better security and insights.",
+          "TrueShield AI monitors live calls in real-time, detects scam patterns, and automatically cuts suspicious calls to protect you from fraud.",
       },
     ],
   }),

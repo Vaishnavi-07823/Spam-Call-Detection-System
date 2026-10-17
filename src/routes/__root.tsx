@@ -106,7 +106,7 @@ function RootComponent() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-background text-foreground relative selection:bg-primary/30 flex flex-col">
-        {/* Top Navbar matching Reference Image (VoiceGuard style) */}
+        {/* Top Navbar — TrueShield AI */}
         <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#070D1F]/90 backdrop-blur-xl text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             {/* Brand Logo with Soundwave Icon */}
@@ -120,10 +120,10 @@ function RootComponent() {
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-base tracking-tight text-white leading-none">
-                  Voice<span className="text-blue-500">Guard</span>
+                  TrueShield<span className="text-blue-500"> AI</span>
                 </span>
                 <span className="text-[9px] text-slate-400 tracking-wider uppercase mt-0.5 font-medium">
-                  Live Call Detection System
+                  Real-Time Scam Call Detection
                 </span>
               </div>
             </Link>

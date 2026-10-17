@@ -33,7 +33,7 @@ import {
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "VoiceGuard Dashboard — Analytics & Detection Activity" },
+      { title: "TrueShield AI Dashboard — Analytics & Detection Activity" },
       { name: "description", content: "Overview of your live calls and detection activity." },
     ],
   }),
@@ -112,10 +112,10 @@ export function DashboardPage() {
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold text-base tracking-tight text-white leading-none">
-                Voice<span className="text-blue-500">Guard</span>
+                TrueShield<span className="text-blue-500"> AI</span>
               </span>
               <span className="text-[9px] text-slate-400 tracking-wider uppercase mt-0.5 font-medium">
-                Live Call Detection System
+                Real-Time Scam Call Detection
               </span>
             </div>
           </Link>

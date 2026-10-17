@@ -37,7 +37,7 @@ import { analyzeWithRules } from "@/services/riskAnalyzer";
 export const Route = createFileRoute("/monitoring")({
   head: () => ({
     meta: [
-      { title: "Live Call Studio — VoiceGuard AI" },
+      { title: "Live Call Studio — TrueShield AI" },
       { name: "description", content: "Real-time call monitoring, transcription, and AI fraud detection studio." },
     ],
   }),

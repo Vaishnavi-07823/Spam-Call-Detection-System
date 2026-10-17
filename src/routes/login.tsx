@@ -13,10 +13,10 @@ export const Route = createFileRoute("/login")({
   }),
   head: () => ({
     meta: [
-      { title: "VoiceGuard — Sign In & Create Account" },
+      { title: "TrueShield AI — Sign In & Create Account" },
       {
         name: "description",
-        content: "Sign in to VoiceGuard AI for live call detection and fraud security.",
+        content: "Sign in to TrueShield AI for real-time scam call detection and fraud security.",
       },
     ],
   }),
@@ -117,10 +117,10 @@ export function LoginPage() {
           </div>
           <div className="flex flex-col text-left">
             <span className="font-extrabold text-base tracking-tight text-slate-900 leading-none">
-              Voice<span className="text-blue-600">Guard</span>
+              TrueShield<span className="text-blue-600"> AI</span>
             </span>
             <span className="text-[9px] text-slate-400 tracking-wider uppercase mt-0.5 font-medium">
-              Live Call Detection System
+              Real-Time Scam Call Detection
             </span>
           </div>
         </Link>
