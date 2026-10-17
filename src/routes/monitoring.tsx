@@ -23,9 +23,14 @@ import {
   Building2,
   Landmark,
   Flame,
+  MapPin,
+  PhoneIncoming,
+  PhoneOutgoing,
+  Navigation,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useLiveLocation } from "@/hooks/useLiveLocation";
 import { analyzeTranscript } from "@/services/apiService";
 import { analyzeWithRules } from "@/services/riskAnalyzer";
 
@@ -224,6 +229,7 @@ const SAMPLE_CALLS = [
 
 export function MonitoringPage() {
   const navigate = useNavigate();
+  const liveLoc = useLiveLocation();
   const [selectedLang, setSelectedLang] = useState<"en-IN" | "hi-IN">("hi-IN");
   const {
     transcript,
@@ -587,6 +593,13 @@ export function MonitoringPage() {
                 explanation: `${activeScenario.callerName} (${activeScenario.callerTitle}) extortion detected. ${activeScenario.scamSummary}`,
                 suggestion:
                   "Call was automatically terminated by TrueShield Circuit Breaker to prevent financial extortion and identity theft. Do not pay or share OTP.",
+                callerName: activeScenario.callerName,
+                callerNumber: activeScenario.callerNumber,
+                callerTitle: activeScenario.callerTitle,
+                targetName: "Vaishnavi Trivedi (Device Owner)",
+                targetNumber: "+91 98451 22910",
+                location: `${liveLoc.locationString} • ${liveLoc.address}`,
+                callType: "Incoming Cellular Audio Call",
               },
             });
           }, 2400);
@@ -632,6 +645,12 @@ export function MonitoringPage() {
                 score: 4,
                 explanation:
                   "Routine communication confirmation call. Verified genuine inquiry without urgency, threats, or payment demands.",
+                callerName: activeScenario.callerName,
+                callerNumber: activeScenario.callerNumber,
+                callerTitle: activeScenario.callerTitle,
+                targetName: "Vaishnavi Trivedi (Device Owner)",
+                targetNumber: "+91 98451 22910",
+                location: `${liveLoc.locationString} • ${liveLoc.address}`,
               },
             });
           }, 2400);
@@ -867,36 +886,79 @@ export function MonitoringPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 items-stretch">
           {/* Left Column (7 cols): Caller Info, Large Waveform, Call Controls */}
           <div className="lg:col-span-7 flex flex-col justify-between gap-6 pr-0 lg:pr-4">
-            {/* Caller Identity Card */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-600/20 border-2 border-blue-500/40 flex items-center justify-center shrink-0 shadow-inner">
-                  <span className="text-2xl">{activeScenario.avatarIcon}</span>
+            {/* Telephony Parties & Caller Identity Grid */}
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
+                {/* Incoming Caller Details */}
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center shrink-0">
+                    <span className="text-2xl">{activeScenario.avatarIcon}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider flex items-center gap-1">
+                        <PhoneIncoming className="h-3 w-3 text-red-400" />
+                        Incoming Suspect
+                      </span>
+                      <span className="text-[10px] text-slate-500">•</span>
+                      <span className="text-[10px] text-slate-400">{activeScenario.callerTitle}</span>
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-white leading-tight mt-0.5">
+                      {activeScenario.callerName}
+                    </h3>
+                    <p className="text-xs text-slate-300 font-mono font-semibold">
+                      {activeScenario.callerNumber}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
-                    {activeScenario.callerName}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-400 font-mono mt-0.5">
-                    {activeScenario.callerNumber}
-                  </p>
-                  <span className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
-                    <Radio className="h-3 w-3 animate-pulse" />
-                    AI Acoustic Guard Active
-                  </span>
+
+                {/* Target Device / Recipient Details */}
+                <div className="flex items-center gap-3 sm:border-l sm:border-slate-800 sm:pl-4">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center shrink-0">
+                    <User className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                      <PhoneOutgoing className="h-3 w-3 text-blue-400" />
+                      Target Device
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-bold text-white mt-0.5">
+                      Vaishnavi Trivedi
+                    </h4>
+                    <p className="text-xs text-slate-400 font-mono font-medium">
+                      +91 98451 22910
+                    </p>
+                  </div>
                 </div>
+
+                {/* Start Simulation Trigger if idle */}
+                {callStatus === "idle" && (
+                  <Button
+                    onClick={triggerIncomingCall}
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs gap-2 px-4 h-10 rounded-xl shadow-lg shadow-blue-600/30 self-stretch sm:self-auto shrink-0"
+                  >
+                    <PhoneCall className="h-4 w-4" />
+                    <span>Simulate Incoming Call</span>
+                  </Button>
+                )}
               </div>
 
-              {/* Start Simulation Trigger if idle */}
-              {callStatus === "idle" && (
-                <Button
-                  onClick={triggerIncomingCall}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs gap-2 px-4 h-10 rounded-xl shadow-lg shadow-blue-600/30"
+              {/* Live Incident Location Pill */}
+              <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-[11px] text-slate-400">
+                <div className="flex items-center gap-2 min-w-0">
+                  <MapPin className="h-3.5 w-3.5 text-emerald-400 animate-pulse shrink-0" />
+                  <span className="text-slate-300 font-medium truncate">
+                    <strong>Live Device Locus:</strong> {liveLoc.locationString} • {liveLoc.address}
+                  </span>
+                </div>
+                <button
+                  onClick={() => liveLoc.refreshLocation()}
+                  className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold shrink-0 ml-2"
                 >
-                  <PhoneCall className="h-4 w-4" />
-                  <span>Simulate Incoming Call</span>
-                </Button>
-              )}
+                  <Navigation className="h-2.5 w-2.5" />
+                  <span>Update GPS</span>
+                </button>
+              </div>
             </div>
 
             {/* Glowing Center Waveform (Wide & Dynamic) */}
@@ -1023,12 +1085,28 @@ export function MonitoringPage() {
                           score: currentRiskScore,
                           explanation: fullText,
                           suggestion: "Call disconnected by user. Inspect detected patterns.",
+                          callerName: activeScenario.callerName,
+                          callerNumber: activeScenario.callerNumber,
+                          callerTitle: activeScenario.callerTitle,
+                          targetName: "Vaishnavi Trivedi (Device Owner)",
+                          targetNumber: "+91 98451 22910",
+                          location: `${liveLoc.locationString} • ${liveLoc.address}`,
+                          callType: "Incoming Cellular Audio Call",
                         },
                       });
                     } else {
                       navigate({
                         to: "/safe",
-                        search: { score: currentRiskScore, explanation: fullText },
+                        search: {
+                          score: currentRiskScore,
+                          explanation: fullText,
+                          callerName: activeScenario.callerName,
+                          callerNumber: activeScenario.callerNumber,
+                          callerTitle: activeScenario.callerTitle,
+                          targetName: "Vaishnavi Trivedi (Device Owner)",
+                          targetNumber: "+91 98451 22910",
+                          location: `${liveLoc.locationString} • ${liveLoc.address}`,
+                        },
                       });
                     }
                   }
