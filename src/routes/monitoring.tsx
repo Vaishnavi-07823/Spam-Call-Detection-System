@@ -25,9 +25,10 @@ import {
   FileText,
   AlertCircle,
   ExternalLink,
+  ShieldAlert,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { analyzeTranscript } from "@/services/apiService";
 import { analyzeWithRules } from "@/services/riskAnalyzer";
@@ -35,7 +36,7 @@ import { analyzeWithRules } from "@/services/riskAnalyzer";
 export const Route = createFileRoute("/monitoring")({
   head: () => ({
     meta: [
-      { title: "Live Monitoring Studio — VoiceGuard AI" },
+      { title: "Live Call Studio — VoiceGuard AI" },
       { name: "description", content: "Real-time call monitoring, transcription, and AI fraud detection studio." },
     ],
   }),
@@ -54,10 +55,10 @@ const SAMPLE_CALLS = [
     callerNumber: "+91 98201 44520",
     callerName: "Pooja Verma (Friend)",
     transcriptLines: [
-      { time: "00:00", text: "Hey! Are you free this weekend for the exhibition?" },
-      { time: "00:04", text: "Yeah, mostly free on Saturday afternoon. Where is it?" },
-      { time: "00:09", text: "At the BKC convention center. Let me send you the passes." },
-      { time: "00:15", text: "Great, see you then! Take care." },
+      { time: "00:00", speaker: "Pooja", text: "Hey! Are you free this weekend for the exhibition?" },
+      { time: "00:04", speaker: "You", text: "Yeah, mostly free on Saturday afternoon. Where is it?" },
+      { time: "00:09", speaker: "Pooja", text: "At the BKC convention center. Let me send you the passes." },
+      { time: "00:15", speaker: "You", text: "Great, see you then! Take care." },
     ],
     detectionSummary: "No suspicious urgency, credential requests, or impersonation detected.",
     detectedKeywords: [],
@@ -72,10 +73,10 @@ const SAMPLE_CALLS = [
     callerNumber: "+91 98765 43210",
     callerName: "Unknown Caller (Bank Alert)",
     transcriptLines: [
-      { time: "00:00", text: "Hello, I am calling from SBI fraud prevention department." },
-      { time: "00:05", text: "Your debit card was used for an unauthorized Rs 45,000 transfer." },
-      { time: "00:11", text: "To reverse this payment, open WhatsApp and share the 6-digit OTP right now." },
-      { time: "00:18", text: "If you don't share within 2 minutes, the money cannot be refunded." },
+      { time: "00:00", speaker: "Caller", text: "Hello, I am calling from SBI fraud prevention department." },
+      { time: "00:05", speaker: "Caller", text: "Your debit card was used for an unauthorized Rs 45,000 transfer." },
+      { time: "00:11", speaker: "Caller", text: "To reverse this payment, open WhatsApp and share the 6-digit OTP right now." },
+      { time: "00:18", speaker: "Caller", text: "If you don't share within 2 minutes, the money cannot be refunded." },
     ],
     detectionSummary: "Coercive urgency and OTP credential solicitation detected.",
     detectedKeywords: ["transfer", "amount", "WhatsApp", "OTP", "within 2 minutes"],
@@ -90,11 +91,11 @@ const SAMPLE_CALLS = [
     callerNumber: "+91 91234 56789",
     callerName: "Arun Nair (Tech Lead)",
     transcriptLines: [
-      { time: "00:00", text: "Hello, I wanted to discuss the project update before the sprint demo." },
-      { time: "00:05", text: "Sure, let me share the details with you regarding the backend API." },
-      { time: "00:10", text: "I'll get back to you by the end of the day with the documentation." },
-      { time: "00:16", text: "Actually, there is some change in the plan for deployment." },
-      { time: "04:22", text: "We need to be careful about database indexing before launch." },
+      { time: "00:00", speaker: "Arun", text: "Hello, I wanted to discuss the project update before the sprint demo." },
+      { time: "00:05", speaker: "You", text: "Sure, let me share the details with you regarding the backend API." },
+      { time: "00:10", speaker: "Arun", text: "I'll get back to you by the end of the day with the documentation." },
+      { time: "00:16", speaker: "Arun", text: "Actually, there is some change in the plan for deployment." },
+      { time: "04:22", speaker: "You", text: "We need to be careful about database indexing before launch." },
     ],
     detectionSummary: "Routine engineering collaboration. Standard professional vocabulary.",
     detectedKeywords: [],
@@ -109,10 +110,10 @@ const SAMPLE_CALLS = [
     callerNumber: "+91 88001 92841",
     callerName: "Fake Customs / Police Office",
     transcriptLines: [
-      { time: "00:00", text: "This is Inspector Vijay Kumar from Delhi Cyber Crime Cell." },
-      { time: "00:04", text: "An illegal parcel containing banned substances is registered under your Aadhaar." },
-      { time: "00:12", text: "You are placed under digital arrest right now. Do not disconnect this call." },
-      { time: "00:20", text: "Transfer Rs 50,000 to the court clearance account immediately to avoid FIR." },
+      { time: "00:00", speaker: "Officer", text: "This is Inspector Vijay Kumar from Delhi Cyber Crime Cell." },
+      { time: "00:04", speaker: "Officer", text: "An illegal parcel containing banned substances is registered under your Aadhaar." },
+      { time: "00:12", speaker: "Officer", text: "You are placed under digital arrest right now. Do not disconnect this call." },
+      { time: "00:20", speaker: "Officer", text: "Transfer Rs 50,000 to the court clearance account immediately to avoid FIR." },
     ],
     detectionSummary: "Critical extortion: Digital arrest extortion, law enforcement impersonation, and money transfer demand.",
     detectedKeywords: ["Cyber Crime", "illegal parcel", "digital arrest", "do not disconnect", "Transfer immediately"],
@@ -132,42 +133,35 @@ export function MonitoringPage() {
     startListening,
     stopListening,
     resetTranscript,
-    injectTranscript,
   } = useSpeechRecognition(selectedLang);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Active Tab inside Player (Live Transcript vs Detection Alerts)
+  // Tabs inside Player & Sample sections
   const [activePlayerTab, setActivePlayerTab] = useState<"transcript" | "alerts">("transcript");
   const [activeSampleTab, setActiveSampleTab] = useState<"transcript" | "alerts">("transcript");
+  const [selectedSample, setSelectedSample] = useState(SAMPLE_CALLS[1]);
 
-  // Selected sample call state
-  const [selectedSample, setSelectedSample] = useState(SAMPLE_CALLS[1]); // Default to Suspicious Call
-  const [isSamplePlaying, setIsSamplePlaying] = useState(false);
-  const [samplePlaybackIndex, setSamplePlaybackIndex] = useState(0);
-
-  // Live in-call timer & active simulated state
-  const [callDuration, setCallDuration] = useState(754); // 00:12:34
-  const [isCallMuted, setIsCallMuted] = useState(false);
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
-
-  // Call simulator modal states (preserved from previous version)
-  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
-  const [simulatorMode, setSimulatorMode] = useState<"bot" | "user_scammer">("bot");
-  const [branchChoice, setBranchChoice] = useState<"pending" | "suspicious" | "genuine">("pending");
-  const branchChoiceRef = useRef<"pending" | "suspicious" | "genuine">("pending");
-  const [callState, setCallState] = useState<"ringing" | "connected" | "interrupted" | "ended">("ringing");
-  const [activeTurnIndex, setActiveTurnIndex] = useState(0);
-  const [conversationHistory, setConversationHistory] = useState<
-    { speaker: "Scammer" | "You"; speakerName: string; text: string; risk: number; status: string }[]
+  // LIVE INTERACTIVE CALL ENGINE STATES
+  // callStatus: "idle" | "ringing" | "connected" | "cutting" | "ended_safe"
+  const [callStatus, setCallStatus] = useState<"idle" | "ringing" | "connected" | "cutting" | "ended_safe">("idle");
+  const [callDuration, setCallDuration] = useState(0);
+  const [activeDialogueIndex, setActiveDialogueIndex] = useState(0);
+  const [branchSelection, setBranchSelection] = useState<"undecided" | "suspicious" | "genuine">("undecided");
+  const [liveTranscriptFeed, setLiveTranscriptFeed] = useState<
+    { time: string; speaker: string; text: string; risk: number }[]
   >([]);
-  const ringtoneCtxRef = useRef<AudioContext | null>(null);
-  const simulatorTimerRef = useRef<any>(null);
-  const autoCutTimerRef = useRef<any>(null);
+  const [currentRiskScore, setCurrentRiskScore] = useState(6);
+  const [currentWarning, setCurrentWarning] = useState<string | null>(null);
 
-  // Browser voices caching
+  // Audio references
+  const ringtoneCtxRef = useRef<AudioContext | null>(null);
+  const dialogueTimerRef = useRef<any>(null);
+  const callDurationTimerRef = useRef<any>(null);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  // Load voices for distinct male (scammer) vs female (victim) playback
   useEffect(() => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     const loadVoices = () => {
@@ -176,97 +170,342 @@ export function MonitoringPage() {
     };
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
   }, []);
 
-  // Timer ticker
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCallDuration((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
+  const maleVoice = useMemo(() => {
+    if (!availableVoices.length) return null;
+    const v = availableVoices.find(
+      (voice) =>
+        (voice.lang.includes("hi") || voice.lang.includes("IN")) &&
+        /madhur|ravi|hemant|david|male/i.test(voice.name)
+    );
+    return v || availableVoices.find((voice) => /male|david|mark/i.test(voice.name)) || availableVoices[0];
+  }, [availableVoices]);
+
+  const femaleVoice = useMemo(() => {
+    if (!availableVoices.length) return null;
+    const v = availableVoices.find(
+      (voice) =>
+        (voice.lang.includes("hi") || voice.lang.includes("IN")) &&
+        /swara|kalpana|geeta|heera|kavya|female/i.test(voice.name)
+    );
+    return v || availableVoices.find((voice) => /female|zira|samantha/i.test(voice.name)) || availableVoices[1] || availableVoices[0];
+  }, [availableVoices]);
+
+  // Ringtone synthesizer using Web Audio API
+  const startRingtone = useCallback(() => {
+    try {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx();
+      ringtoneCtxRef.current = ctx;
+
+      let isRinging = true;
+      const playRing = () => {
+        if (!isRinging || ctx.state === "closed") return;
+
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = "sine";
+        osc2.type = "sine";
+        osc1.frequency.setValueAtTime(440, ctx.currentTime);
+        osc2.frequency.setValueAtTime(480, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime + 1.8);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2.0);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(ctx.currentTime);
+        osc2.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 2.0);
+        osc2.stop(ctx.currentTime + 2.0);
+
+        setTimeout(() => {
+          if (isRinging && ctx.state !== "closed") playRing();
+        }, 3800);
+      };
+
+      playRing();
+      return () => {
+        isRinging = false;
+        if (ctx.state !== "closed") ctx.close().catch(() => {});
+      };
+    } catch {
+      return () => {};
+    }
   }, []);
 
+  const stopRingtone = useCallback(() => {
+    if (ringtoneCtxRef.current && ringtoneCtxRef.current.state !== "closed") {
+      ringtoneCtxRef.current.close().catch(() => {});
+      ringtoneCtxRef.current = null;
+    }
+  }, []);
+
+  // Format seconds to mm:ss
   const formatTimer = (totalSeconds: number) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  // Rule-based live risk evaluation
-  const liveRisk = useMemo(() => {
-    const activeText = transcript.trim() || selectedSample.transcriptLines.map((l) => l.text).join(" ");
-    return analyzeWithRules(activeText);
-  }, [transcript, selectedSample]);
+  // Timer runner when connected
+  useEffect(() => {
+    if (callStatus === "connected") {
+      callDurationTimerRef.current = setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
+    } else {
+      if (callDurationTimerRef.current) clearInterval(callDurationTimerRef.current);
+    }
+    return () => {
+      if (callDurationTimerRef.current) clearInterval(callDurationTimerRef.current);
+    };
+  }, [callStatus]);
 
-  // Main analyze handler
-  const handleAnalyze = useCallback(
-    async (customText?: string, sessionId?: string, resetSession?: boolean) => {
-      const textToAnalyze = (customText || transcript || selectedSample.transcriptLines.map((l) => l.text).join(" ")).trim();
-      if (!textToAnalyze) return;
-
-      setIsAnalyzing(true);
-      setApiError(null);
-      stopListening();
-
-      try {
-        const result = await analyzeTranscript(textToAnalyze, sessionId, resetSession);
-        if (result.riskScore >= 50) {
-          navigate({
-            to: "/alert",
-            search: {
-              score: result.riskScore,
-              explanation: result.explanation,
-              suggestion: result.suggestion,
-            },
-          });
-        } else {
-          navigate({
-            to: "/safe",
-            search: {
-              score: result.riskScore,
-              explanation: result.explanation,
-            },
-          });
-        }
-      } catch (err) {
-        setApiError(err instanceof Error ? err.message : "Failed to analyze transcript");
-        setIsAnalyzing(false);
+  // Clean speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
       }
-    },
-    [transcript, selectedSample, stopListening, navigate]
-  );
+      stopRingtone();
+      if (dialogueTimerRef.current) clearTimeout(dialogueTimerRef.current);
+    };
+  }, [stopRingtone]);
 
-  // Play sample call audio simulation step-by-step
-  const handlePlaySample = (sample: typeof SAMPLE_CALLS[0]) => {
-    setSelectedSample(sample);
-    setIsSamplePlaying(true);
-    setSamplePlaybackIndex(0);
-
-    // Speak first line using browser speech synthesis
+  // Trigger Incoming Call (Ringing phase)
+  const triggerIncomingCall = () => {
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(sample.transcriptLines[0].text);
-      utterance.lang = "en-IN";
-      utterance.onend = () => {
-        setIsSamplePlaying(false);
-      };
-      window.speechSynthesis.speak(utterance);
+    }
+    stopRingtone();
+    setCallStatus("ringing");
+    setCallDuration(0);
+    setActiveDialogueIndex(0);
+    setBranchSelection("undecided");
+    setCurrentRiskScore(6);
+    setCurrentWarning(null);
+    setLiveTranscriptFeed([]);
+    startRingtone();
+  };
+
+  // User accepts the call (Pickup phase)
+  const acceptIncomingCall = () => {
+    stopRingtone();
+    setCallStatus("connected");
+    setCallDuration(1);
+    playTurn(0, "undecided");
+  };
+
+  // User declines or cancels the call
+  const declineIncomingCall = () => {
+    stopRingtone();
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setCallStatus("idle");
+  };
+
+  // Speak text with speech synthesis
+  const speakText = (text: string, isMale: boolean, onDone: () => void) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      setTimeout(onDone, 2500);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const targetVoice = isMale ? maleVoice : femaleVoice;
+    if (targetVoice) utterance.voice = targetVoice;
+    utterance.lang = "hi-IN";
+    utterance.rate = 1.0;
+    utterance.pitch = isMale ? 0.9 : 1.1;
+
+    utterance.onend = () => {
+      onDone();
+    };
+    utterance.onerror = () => {
+      onDone();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Master turn-by-turn dialogue orchestrator
+  const playTurn = (turnIndex: number, currentBranch: "undecided" | "suspicious" | "genuine") => {
+    // SHARED OPENING (Turns 0 & 1)
+    if (turnIndex === 0) {
+      const text =
+        selectedLang === "hi-IN"
+          ? "Namaste madam! Main State Bank of India Mumbai Service desk se Rajesh Sharma bol raha hoon. Kya meri baat account holder se ho rahi hai?"
+          : "Hello madam! I am Rajesh Sharma calling from SBI Mumbai Service desk. Am I speaking with the account holder?";
+
+      setLiveTranscriptFeed((prev) => [
+        ...prev,
+        { time: "00:01", speaker: "Caller (Bank)", text, risk: 8 },
+      ]);
+      setCurrentRiskScore(8);
+      setCurrentWarning("Routine bank service desk greeting.");
+
+      speakText(text, true, () => {
+        dialogueTimerRef.current = setTimeout(() => {
+          playTurn(1, currentBranch);
+        }, 1200);
+      });
+      return;
+    }
+
+    if (turnIndex === 1) {
+      const text =
+        selectedLang === "hi-IN"
+          ? "Haan ji namaste sir. Ji boliye, main account holder hi bol rahi hoon. Kahiye kya kaam tha?"
+          : "Yes hello sir. Yes, I am the account holder. Please tell me what this is regarding?";
+
+      setLiveTranscriptFeed((prev) => [
+        ...prev,
+        { time: "00:05", speaker: "You (Target)", text, risk: 8 },
+      ]);
+
+      speakText(text, false, () => {
+        // Now prompt user for branch decision if undecided
+        setActiveDialogueIndex(2);
+      });
+      return;
+    }
+
+    // BRANCH A: SUSPICIOUS / SCAM FLOW (Turns 2 & 3 ➔ AUTO-CUT!)
+    if (currentBranch === "suspicious") {
+      if (turnIndex === 2) {
+        const text =
+          selectedLang === "hi-IN"
+            ? "Ji madam! RBI guidelines ke mutabik agar aaj raat 12 baje se pehle e-KYC nahi hua toh aapka khata aur debit card permanently freeze ho jayega!"
+            : "Yes madam! If e-KYC is not updated before midnight, your account and debit card will be permanently frozen!";
+
+        setLiveTranscriptFeed((prev) => [
+          ...prev,
+          { time: "00:10", speaker: "Caller (Scammer)", text, risk: 65 },
+        ]);
+        setCurrentRiskScore(65);
+        setCurrentWarning("⚠️ Coercive urgency & KYC account freeze threat detected!");
+
+        speakText(text, true, () => {
+          dialogueTimerRef.current = setTimeout(() => {
+            playTurn(3, "suspicious");
+          }, 1000);
+        });
+        return;
+      }
+
+      if (turnIndex === 3) {
+        const text =
+          selectedLang === "hi-IN"
+            ? "Maine aapke phone par 6-digit OTP bheja hai, turant apna OTP aur PIN batayein warna police complaint hogi aur khata abhi band ho jayega!"
+            : "I sent a 6-digit OTP to your phone, share your OTP and PIN immediately or face police complaint and account closure!";
+
+        setLiveTranscriptFeed((prev) => [
+          ...prev,
+          { time: "00:16", speaker: "Caller (Scammer)", text, risk: 98 },
+        ]);
+        setCurrentRiskScore(98);
+        setCurrentWarning("🚨 CRITICAL SCAM: OTP Extortion & Authority Impersonation!");
+
+        speakText(text, true, () => {
+          // ================= AUTO-CUT CIRCUIT BREAKER =================
+          setCallStatus("cutting");
+          if (typeof window !== "undefined" && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+          }
+
+          // Trigger high-risk siren / alert navigation
+          setTimeout(() => {
+            navigate({
+              to: "/alert",
+              search: {
+                score: 98,
+                explanation:
+                  "Scammer impersonating bank representative demanded immediate 6-digit OTP and threatened account closure and police complaint.",
+                suggestion:
+                  "Call was automatically cut by TrueShield Circuit Breaker to prevent financial fraud. Do not share OTP.",
+              },
+            });
+          }, 2400);
+        });
+        return;
+      }
+    }
+
+    // BRANCH B: GENUINE / SAFE FLOW (Turns 2 & 3 ➔ CALL CONCLUDES SAFELY, NOT CUT!)
+    if (currentBranch === "genuine") {
+      if (turnIndex === 2) {
+        const text =
+          selectedLang === "hi-IN"
+            ? "Madam, hum bas aapke registered branch communication address aur email ka routine annual confirmation lena chahte the. Koi confidential info nahi chahiye."
+            : "Madam, we just wanted to confirm your registered communication address and email for routine records. No confidential info needed.";
+
+        setLiveTranscriptFeed((prev) => [
+          ...prev,
+          { time: "00:10", speaker: "Caller (Bank)", text, risk: 6 },
+        ]);
+        setCurrentRiskScore(6);
+        setCurrentWarning("Routine customer record confirmation. Zero risk keywords.");
+
+        speakText(text, true, () => {
+          dialogueTimerRef.current = setTimeout(() => {
+            playTurn(3, "genuine");
+          }, 1000);
+        });
+        return;
+      }
+
+      if (turnIndex === 3) {
+        const text =
+          selectedLang === "hi-IN"
+            ? "Bahut badhiya madam, aapka confirmation record ho gaya hai. Yaad rahe bank kabhi aapse phone par OTP ya PIN nahi maangta. Have a great day!"
+            : "Thank you madam, your confirmation is recorded. Remember banks never ask for OTP or PIN over phone. Have a wonderful day!";
+
+        setLiveTranscriptFeed((prev) => [
+          ...prev,
+          { time: "00:16", speaker: "Caller (Bank)", text, risk: 4 },
+        ]);
+        setCurrentRiskScore(4);
+        setCurrentWarning("Call Verified Genuine. No credential ask.");
+
+        speakText(text, true, () => {
+          setCallStatus("ended_safe");
+          setTimeout(() => {
+            navigate({
+              to: "/safe",
+              search: {
+                score: 4,
+                explanation:
+                  "Routine banking communication address verification call. No suspicious urgency, threats, or OTP requests.",
+              },
+            });
+          }, 2400);
+        });
+        return;
+      }
     }
   };
 
-  const handleMicToggle = () => {
-    if (isListening) {
-      stopListening();
-      if (transcript.trim().length > 3) {
-        handleAnalyze();
-      }
-    } else {
-      resetTranscript();
-      startListening();
-    }
+  // Branch Decision Trigger
+  const chooseBranch = (branch: "suspicious" | "genuine") => {
+    setBranchSelection(branch);
+    playTurn(2, branch);
   };
 
   return (
@@ -279,81 +518,239 @@ export function MonitoringPage() {
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
               Live Call
             </h2>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Live
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                callStatus === "connected"
+                  ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                  : callStatus === "ringing"
+                  ? "bg-amber-500/15 border border-amber-500/30 text-amber-400 animate-pulse"
+                  : callStatus === "cutting"
+                  ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-ping"
+                  : "bg-slate-800 text-slate-400 border border-slate-700"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  callStatus === "connected"
+                    ? "bg-emerald-400 animate-pulse"
+                    : callStatus === "ringing"
+                    ? "bg-amber-400"
+                    : callStatus === "cutting"
+                    ? "bg-red-500"
+                    : "bg-slate-500"
+                }`}
+              />
+              {callStatus === "connected"
+                ? "Live & Analyzing"
+                : callStatus === "ringing"
+                ? "Incoming Ringing..."
+                : callStatus === "cutting"
+                ? "AUTO-CUT DISCONNECTING"
+                : callStatus === "ended_safe"
+                ? "Concluded (Safe)"
+                : "Standby"}
             </span>
             <span className="text-xs sm:text-sm font-mono text-slate-400 ml-1">
               {formatTimer(callDuration)}
             </span>
           </div>
 
-          {/* Right Tabs: Live Transcript vs Detection Alerts */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800">
-            <button
-              onClick={() => setActivePlayerTab("transcript")}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                activePlayerTab === "transcript"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Live Transcript
-            </button>
-            <button
-              onClick={() => setActivePlayerTab("alerts")}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
-                activePlayerTab === "alerts"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <span>Detection Alerts</span>
-              {liveRisk && liveRisk.ruleScore >= 50 && (
-                <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
-              )}
-            </button>
+          {/* Right Controls: Language Selector + Tab Switcher */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+              <button
+                onClick={() => {
+                  setSelectedLang("hi-IN");
+                  setLang("hi-IN");
+                }}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                  selectedLang === "hi-IN" ? "bg-blue-600 text-white" : "text-slate-400"
+                }`}
+              >
+                हिंदी / Hinglish
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedLang("en-IN");
+                  setLang("en-IN");
+                }}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                  selectedLang === "en-IN" ? "bg-blue-600 text-white" : "text-slate-400"
+                }`}
+              >
+                English
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800">
+              <button
+                onClick={() => setActivePlayerTab("transcript")}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                  activePlayerTab === "transcript"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Live Transcript
+              </button>
+              <button
+                onClick={() => setActivePlayerTab("alerts")}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                  activePlayerTab === "alerts"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <span>Detection Alerts</span>
+                {currentRiskScore >= 50 && (
+                  <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Main Player Grid: Left (Caller & Waveform & Controls) | Right (Live Transcript Feed) */}
+        {/* ================= INCOMING CALL RINGING MODAL / OVERLAY ================= */}
+        {callStatus === "ringing" && (
+          <div className="my-6 p-6 rounded-2xl bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border-2 border-blue-500/40 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full bg-blue-500/30 animate-ping absolute inset-0" />
+                <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-3xl shadow-xl relative z-10">
+                  👨‍💼
+                </div>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block">
+                  INCOMING CELLULAR CALL...
+                </span>
+                <h3 className="text-xl font-black text-white">Rajesh Sharma</h3>
+                <p className="text-xs text-slate-300">SBI Mumbai Service & Verification Desk</p>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">+91 98765 43210</p>
+              </div>
+            </div>
+
+            {/* Answer / Decline Button Pair */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={declineIncomingCall}
+                className="h-12 px-6 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center gap-2 border border-slate-700"
+              >
+                <PhoneOff className="h-4 w-4" />
+                <span>Decline</span>
+              </button>
+
+              <button
+                onClick={acceptIncomingCall}
+                className="h-12 px-8 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center gap-2 shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all hover:scale-105 active:scale-95 animate-bounce"
+              >
+                <Phone className="h-5 w-5" />
+                <span>Pick Up & Listen</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================= AUTO-CUT BANNER (WHEN SUSPICIOUS CALL IS KILLED) ================= */}
+        {callStatus === "cutting" && (
+          <div className="my-6 p-5 rounded-2xl bg-red-950 border-2 border-red-500 text-white shadow-[0_0_50px_rgba(239,68,68,0.6)] flex items-center gap-4 animate-bounce">
+            <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shrink-0">
+              <PhoneOff className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-red-200">
+                🚨 AUTO-CUT: CALL CUT BY TRUESHIELD CIRCUIT BREAKER!
+              </h3>
+              <p className="text-xs text-red-300 mt-0.5">
+                Critical scam pattern verified: OTP demand + authority intimidation. Line terminated in &lt;120ms to protect account.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ================= SAFE END BANNER ================= */}
+        {callStatus === "ended_safe" && (
+          <div className="my-6 p-5 rounded-2xl bg-emerald-950 border-2 border-emerald-500 text-white shadow-xl flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-emerald-200">
+                ✓ CALL SAFELY CONCLUDED (NOT CUT)
+              </h3>
+              <p className="text-xs text-emerald-300 mt-0.5">
+                Genuine verification call confirmed. Zero urgency or sensitive data requests detected.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Player Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 items-stretch">
           {/* Left Column (7 cols): Caller Info, Large Waveform, Call Controls */}
           <div className="lg:col-span-7 flex flex-col justify-between gap-6 pr-0 lg:pr-4">
             {/* Caller Identity Card */}
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-600/20 border-2 border-blue-500/40 flex items-center justify-center shrink-0 shadow-inner">
-                <span className="text-2xl">👤</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-600/20 border-2 border-blue-500/40 flex items-center justify-center shrink-0 shadow-inner">
+                  <span className="text-2xl">👤</span>
+                </div>
+                <div className="flex flex-col">
+                  <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                    {callStatus === "connected" || callStatus === "ringing"
+                      ? "Rajesh Sharma (SBI Bank)"
+                      : selectedSample.callerName}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-400 font-mono mt-0.5">
+                    {callStatus === "connected" || callStatus === "ringing"
+                      ? "+91 98765 43210"
+                      : selectedSample.callerNumber}
+                  </p>
+                  <span className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
+                    <Radio className="h-3 w-3 animate-pulse" />
+                    AI Acoustic Guard Active
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
-                  {selectedSample.callerName}
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-400 font-mono mt-0.5">
-                  {selectedSample.callerNumber}
-                </p>
-                <span className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
-                  <Radio className="h-3 w-3 animate-pulse" />
-                  Dual-Engine Interception Active
-                </span>
-              </div>
+
+              {/* Start Simulation Trigger if idle */}
+              {callStatus === "idle" && (
+                <Button
+                  onClick={triggerIncomingCall}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs gap-2 px-4 h-10 rounded-xl shadow-lg shadow-blue-600/30"
+                >
+                  <PhoneCall className="h-4 w-4" />
+                  <span>Simulate Incoming Call</span>
+                </Button>
+              )}
             </div>
 
             {/* Glowing Center Waveform (Wide & Dynamic) */}
-            <div className="w-full h-24 sm:h-28 bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 flex items-center justify-center gap-1.5 overflow-hidden">
+            <div
+              className={`w-full h-24 sm:h-28 rounded-xl px-4 flex items-center justify-center gap-1.5 overflow-hidden transition-colors ${
+                currentRiskScore > 70
+                  ? "bg-red-950/40 border border-red-500/50"
+                  : "bg-slate-950/60 border border-slate-800/80"
+              }`}
+            >
               {[20, 44, 28, 64, 80, 52, 95, 36, 72, 48, 88, 32, 60, 40, 76, 24, 68, 50, 84, 30, 48, 22].map(
                 (h, idx) => (
                   <motion.span
                     key={idx}
-                    className="w-1 sm:w-1.5 rounded-full bg-gradient-to-t from-blue-600 to-cyan-400"
+                    className={`w-1 sm:w-1.5 rounded-full ${
+                      currentRiskScore > 70
+                        ? "bg-red-500"
+                        : "bg-gradient-to-t from-blue-600 to-cyan-400"
+                    }`}
                     animate={{
-                      height: isListening || isSamplePlaying
-                        ? [
-                            `${Math.max(10, h * 0.3)}px`,
-                            `${h}px`,
-                            `${Math.max(8, h * 0.2)}px`,
-                          ]
-                        : `${Math.max(12, h * 0.25)}px`,
+                      height:
+                        callStatus === "connected" || isListening
+                          ? [
+                              `${Math.max(10, h * 0.3)}px`,
+                              `${h}px`,
+                              `${Math.max(8, h * 0.2)}px`,
+                            ]
+                          : `${Math.max(12, h * 0.25)}px`,
                     }}
                     transition={{
                       repeat: Infinity,
@@ -366,62 +763,106 @@ export function MonitoringPage() {
               )}
             </div>
 
-            {/* In-Call Controls Row (Mute, Keypad, Speaker, Red End Call) */}
+            {/* Turn Decision Selector (Appears during call for user to choose branch) */}
+            {callStatus === "connected" && activeDialogueIndex === 2 && branchSelection === "undecided" && (
+              <div className="p-3.5 rounded-xl bg-blue-950/70 border border-blue-500/50 flex flex-col gap-2.5 shadow-xl">
+                <span className="text-[11px] font-bold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5 text-amber-400" />
+                  Choose How the Caller Proceeds:
+                </span>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    onClick={() => chooseBranch("suspicious")}
+                    className="p-2.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 border border-red-500/50 text-left transition-all"
+                  >
+                    <span className="text-xs font-bold text-red-300 block">
+                      ⚠️ Caller Turns Suspicious (Scam)
+                    </span>
+                    <span className="text-[10px] text-slate-300 block mt-0.5">
+                      Demands OTP & threats ➔ Auto-Cuts Call!
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => chooseBranch("genuine")}
+                    className="p-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 text-left transition-all"
+                  >
+                    <span className="text-xs font-bold text-emerald-300 block">
+                      🛡️ Caller Stays Genuine (Safe)
+                    </span>
+                    <span className="text-[10px] text-slate-300 block mt-0.5">
+                      Routine address verification ➔ Call NOT cut.
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* In-Call Controls Row */}
             <div className="flex items-center justify-between gap-3 pt-2">
               <div className="flex items-center gap-2 sm:gap-3">
-                {/* Mute Button */}
+                {/* Mute / Mic Button */}
                 <button
-                  onClick={handleMicToggle}
+                  onClick={() => {
+                    if (callStatus === "connected") {
+                      if (typeof window !== "undefined" && window.speechSynthesis) {
+                        window.speechSynthesis.cancel();
+                      }
+                    } else {
+                      if (isListening) stopListening();
+                      else {
+                        resetTranscript();
+                        startListening();
+                      }
+                    }
+                  }}
                   className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
                     isListening
                       ? "bg-red-500/20 text-red-400 border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.4)]"
                       : "bg-slate-800 hover:bg-slate-700 text-slate-300"
                   }`}
-                  title={isListening ? "Stop Microphone" : "Start Live Microphone"}
+                  title="Toggle Microphone"
                 >
                   {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </button>
 
-                {/* Keypad Button */}
+                {/* Incoming Call Simulator Trigger */}
                 <button
-                  onClick={() => setIsSimulatorOpen(true)}
+                  onClick={triggerIncomingCall}
                   className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
-                  title="Open Phone Simulation"
+                  title="Trigger Incoming Call with Ringtone"
                 >
-                  <Grid className="h-5 w-5" />
-                </button>
-
-                {/* Speaker Toggle Button */}
-                <button
-                  onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors ${
-                    isSpeakerOn
-                      ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                      : "bg-slate-800 text-slate-500"
-                  }`}
-                  title="Toggle Audio Speaker"
-                >
-                  <Volume2 className="h-5 w-5" />
+                  <PhoneCall className="h-5 w-5 text-blue-400" />
                 </button>
               </div>
 
-              {/* Red End Call & Analyze Button */}
+              {/* End Call Button */}
               <button
-                onClick={() => handleAnalyze()}
-                disabled={isAnalyzing}
+                onClick={() => {
+                  declineIncomingCall();
+                  if (liveTranscriptFeed.length > 0) {
+                    const fullText = liveTranscriptFeed.map((l) => l.text).join(" ");
+                    if (currentRiskScore > 50) {
+                      navigate({
+                        to: "/alert",
+                        search: {
+                          score: currentRiskScore,
+                          explanation: fullText,
+                          suggestion: "Call disconnected by user. Inspect detected patterns.",
+                        },
+                      });
+                    } else {
+                      navigate({
+                        to: "/safe",
+                        search: { score: currentRiskScore, explanation: fullText },
+                      });
+                    }
+                  }
+                }}
                 className="h-11 sm:h-12 px-5 sm:px-6 rounded-full bg-red-600 hover:bg-red-500 text-white font-semibold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-red-600/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <PhoneOff className="h-4 w-4" />
-                    <span>End Call</span>
-                  </>
-                )}
+                <PhoneOff className="h-4 w-4" />
+                <span>End Call</span>
               </button>
             </div>
           </div>
@@ -430,22 +871,46 @@ export function MonitoringPage() {
           <div className="lg:col-span-5 flex flex-col justify-between bg-slate-950/70 rounded-xl border border-slate-800 p-4 min-h-[300px]">
             {activePlayerTab === "transcript" ? (
               <div className="flex flex-col gap-2.5 overflow-y-auto max-h-[260px] pr-1">
-                {/* Transcript Dialogues */}
-                {selectedSample.transcriptLines.map((line, i) => (
-                  <div key={i} className="flex items-start gap-2.5 text-xs text-slate-300">
-                    <span className="font-mono text-slate-500 shrink-0 text-[11px] pt-0.5">
-                      {line.time}
-                    </span>
-                    <p className="leading-snug">
-                      {line.text}
-                    </p>
-                  </div>
-                ))}
+                {liveTranscriptFeed.length > 0 ? (
+                  liveTranscriptFeed.map((line, i) => (
+                    <div key={i} className="flex items-start gap-2.5 text-xs text-slate-300">
+                      <span className="font-mono text-slate-500 shrink-0 text-[11px] pt-0.5">
+                        {line.time}
+                      </span>
+                      <p className="leading-snug">
+                        <strong
+                          className={
+                            line.speaker.includes("Scammer")
+                              ? "text-red-400"
+                              : line.speaker.includes("Caller")
+                              ? "text-blue-400"
+                              : "text-emerald-400"
+                          }
+                        >
+                          {line.speaker}:{" "}
+                        </strong>
+                        {line.text}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  selectedSample.transcriptLines.map((line, i) => (
+                    <div key={i} className="flex items-start gap-2.5 text-xs text-slate-300">
+                      <span className="font-mono text-slate-500 shrink-0 text-[11px] pt-0.5">
+                        {line.time}
+                      </span>
+                      <p className="leading-snug">
+                        <strong className="text-blue-400">{line.speaker}: </strong>
+                        {line.text}
+                      </p>
+                    </div>
+                  ))
+                )}
 
                 {/* Ambient Real-Time Speech Stream if Mic Active */}
                 {transcript && (
                   <div className="mt-2 pt-2 border-t border-slate-800 flex items-start gap-2.5 text-xs text-blue-300">
-                    <span className="font-mono text-blue-400 shrink-0 text-[11px] pt-0.5">Live</span>
+                    <span className="font-mono text-blue-400 shrink-0 text-[11px] pt-0.5">Live Mic</span>
                     <p className="leading-snug">{transcript}</p>
                   </div>
                 )}
@@ -455,50 +920,39 @@ export function MonitoringPage() {
               <div className="flex flex-col gap-3 py-2">
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    Risk Assessment
+                    Continuous Threat Evaluation
                   </span>
                   <p className="text-sm font-semibold text-white">
                     Risk Score:{" "}
                     <span
                       className={
-                        selectedSample.riskScore > 70
-                          ? "text-red-400 font-bold"
-                          : selectedSample.riskScore > 30
+                        currentRiskScore > 70
+                          ? "text-red-400 font-black text-base"
+                          : currentRiskScore > 30
                           ? "text-amber-400 font-bold"
                           : "text-emerald-400 font-bold"
                       }
                     >
-                      {selectedSample.riskScore} / 100
+                      {currentRiskScore} / 100
                     </span>
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">{selectedSample.detectionSummary}</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {currentWarning || "Awaiting live caller speech stream."}
+                  </p>
                 </div>
-
-                {selectedSample.detectedKeywords.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedSample.detectedKeywords.map((kw, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/30 text-red-400 text-[11px] font-mono"
-                      >
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 
             {/* Bottom Alert Banner matching the Reference Image */}
             <div
               className={`mt-4 rounded-xl p-3 border flex items-start gap-3 transition-colors ${
-                selectedSample.riskScore > 50
+                currentRiskScore > 50
                   ? "bg-red-500/15 border-red-500/40 text-red-200"
                   : "bg-emerald-500/15 border-emerald-500/30 text-emerald-200"
               }`}
             >
               <div className="mt-0.5">
-                {selectedSample.riskScore > 50 ? (
+                {currentRiskScore > 50 ? (
                   <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
                 ) : (
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -506,14 +960,14 @@ export function MonitoringPage() {
               </div>
               <div className="flex-1 text-xs">
                 <p className="font-bold text-white">
-                  {selectedSample.riskScore > 50
-                    ? "Suspicious Keyword Detected"
+                  {currentRiskScore > 50
+                    ? "Suspicious Keyword Detected — Circuit Breaker Active"
                     : "Call Status: Normal & Safe"}
                 </p>
                 <p className="text-[11px] text-slate-300 mt-0.5">
-                  {selectedSample.riskScore > 50
-                    ? `Keyword: ${selectedSample.detectedKeywords[0] || "OTP"} | Confidence: ${selectedSample.riskScore}%`
-                    : "No high-risk vectors detected. Verified dialogue pattern."}
+                  {currentRiskScore > 50
+                    ? `Keyword: OTP / Freeze / Urgent | Confidence: ${currentRiskScore}% (Call will auto-cut)`
+                    : "No high-risk vectors detected. Verified dialogue pattern (Call will not be cut)."}
                 </p>
               </div>
             </div>
@@ -523,7 +977,6 @@ export function MonitoringPage() {
 
       {/* ================= 2. SAMPLE CALL SUITE (WHITE CARD LAYOUT AS IN REFERENCE) ================= */}
       <section className="w-full rounded-2xl bg-white text-slate-900 border border-slate-200/90 p-6 shadow-sm">
-        {/* Header */}
         <div className="mb-6">
           <h3 className="text-xl font-bold tracking-tight text-slate-900">Sample Call</h3>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
@@ -531,7 +984,6 @@ export function MonitoringPage() {
           </p>
         </div>
 
-        {/* 2-Column Suite Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column (6 cols): List of 4 Pre-Loaded Scenarios */}
           <div className="lg:col-span-6 flex flex-col gap-3">
@@ -540,7 +992,11 @@ export function MonitoringPage() {
               return (
                 <div
                   key={sample.id}
-                  onClick={() => setSelectedSample(sample)}
+                  onClick={() => {
+                    setSelectedSample(sample);
+                    setCurrentRiskScore(sample.riskScore);
+                    setCurrentWarning(sample.detectionSummary);
+                  }}
                   className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
                     isSelected
                       ? "border-blue-600 bg-blue-50/50 shadow-sm"
@@ -551,7 +1007,15 @@ export function MonitoringPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePlaySample(sample);
+                        setSelectedSample(sample);
+                        setCurrentRiskScore(sample.riskScore);
+                        // Speak first line using speech synthesis
+                        if (typeof window !== "undefined" && window.speechSynthesis) {
+                          window.speechSynthesis.cancel();
+                          const utt = new SpeechSynthesisUtterance(sample.transcriptLines[0].text);
+                          utt.lang = "en-IN";
+                          window.speechSynthesis.speak(utt);
+                        }
                       }}
                       className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform hover:scale-105 ${
                         isSelected
@@ -572,7 +1036,6 @@ export function MonitoringPage() {
                     </div>
                   </div>
 
-                  {/* Badge */}
                   <span
                     className={`text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${
                       sample.tagType === "safe"
@@ -592,7 +1055,6 @@ export function MonitoringPage() {
           {/* Right Column (6 cols): Active Sample Preview Card */}
           <div className="lg:col-span-6 rounded-xl border border-slate-200/90 bg-slate-50/40 p-5 flex flex-col justify-between min-h-[320px]">
             <div>
-              {/* Card Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
                 <div className="flex items-center gap-2">
                   <span
@@ -654,17 +1116,15 @@ export function MonitoringPage() {
                       <span className="font-mono text-slate-400 text-[10px] shrink-0 pt-0.5">
                         {line.time}
                       </span>
-                      <span>{line.text}</span>
+                      <span>
+                        <strong>{line.speaker}:</strong> {line.text}
+                      </span>
                     </div>
                   ))
                 ) : (
                   <div className="py-1 space-y-2">
-                    <p className="font-medium text-slate-800">
-                      Detection Analysis:
-                    </p>
-                    <p className="text-slate-500 text-xs">
-                      {selectedSample.detectionSummary}
-                    </p>
+                    <p className="font-medium text-slate-800">Detection Analysis:</p>
+                    <p className="text-slate-500 text-xs">{selectedSample.detectionSummary}</p>
                   </div>
                 )}
               </div>
@@ -675,8 +1135,7 @@ export function MonitoringPage() {
               <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
                 <span>
-                  <strong>Keyword detected:</strong>{" "}
-                  {selectedSample.detectedKeywords.join(", ")}
+                  <strong>Keyword detected:</strong> {selectedSample.detectedKeywords.join(", ")}
                 </span>
               </div>
             ) : (
@@ -686,33 +1145,6 @@ export function MonitoringPage() {
               </div>
             )}
           </div>
-        </div>
-      </section>
-
-      {/* ================= 3. QUICK ACTIONS & FULL SIMULATOR LAUNCH ================= */}
-      <section className="w-full flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-white">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
-            <Phone className="h-5 w-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold">Interactive 2-Branch Phone Simulator</h4>
-            <p className="text-xs text-slate-400">
-              Test realistic incoming caller dialogues with turn-by-turn Indian voices.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => {
-              // Open simulator
-              setIsSimulatorOpen(true);
-            }}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 h-9 rounded-lg"
-          >
-            Launch Phone Screen
-          </Button>
         </div>
       </section>
     </div>
