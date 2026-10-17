@@ -12,21 +12,17 @@ import {
   PhoneOff,
   Volume2,
   Globe,
-  Wifi,
-  Battery,
   User,
-  Grid,
   Play,
-  Pause,
-  MessageSquare,
   Clock,
   PhoneCall,
   Radio,
   FileText,
   AlertCircle,
-  ExternalLink,
-  ShieldAlert,
   Zap,
+  Building2,
+  Landmark,
+  Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
@@ -43,7 +39,113 @@ export const Route = createFileRoute("/monitoring")({
   component: MonitoringPage,
 });
 
-// Pre-defined sample call library matching the reference design
+// Interactive Fraud Scenarios for Evaluators / Viva Demo
+const FRAUD_SCENARIOS = [
+  {
+    id: "bank" as const,
+    name: "1. Bank KYC & OTP Extortion",
+    icon: Landmark,
+    callerName: "Rajesh Sharma",
+    callerTitle: "SBI Mumbai Service & Verification Desk",
+    callerNumber: "+91 98765 43210",
+    avatarIcon: "👨‍💼",
+    openingHindi:
+      "Namaste madam! Main State Bank of India Mumbai Service desk se Rajesh Sharma bol raha hoon. Kya meri baat account holder se ho rahi hai?",
+    openingEnglish:
+      "Hello madam! I am Rajesh Sharma calling from SBI Mumbai Service desk. Am I speaking with the account holder?",
+    targetOpeningHindi:
+      "Haan ji namaste sir. Ji boliye, main account holder hi bol rahi hoon. Kahiye kya kaam tha?",
+    targetOpeningEnglish:
+      "Yes hello sir. Yes, I am the account holder. Please tell me what this is regarding?",
+    scamTurn1Hindi:
+      "Ji madam! RBI guidelines ke mutabik agar aaj raat 12 baje se pehle e-KYC nahi hua toh aapka khata aur debit card permanently freeze ho jayega!",
+    scamTurn1English:
+      "Yes madam! Under RBI rules, if your e-KYC is not updated before midnight, your bank account and debit card will be permanently frozen!",
+    scamTurn2Hindi:
+      "Maine aapke phone par 6-digit OTP bheja hai, turant apna OTP aur PIN batayein warna police complaint hogi aur khata abhi band ho jayega!",
+    scamTurn2English:
+      "I have sent a 6-digit OTP to your phone, share your OTP and PIN immediately or face police complaint and account closure!",
+    genuineTurn1Hindi:
+      "Madam, hum bas aapke registered branch communication address aur email ka routine annual confirmation lena chahte the. Koi confidential info nahi chahiye.",
+    genuineTurn1English:
+      "Madam, we just wanted to confirm your registered communication address and email for routine bank records. No confidential info needed.",
+    genuineTurn2Hindi:
+      "Bahut badhiya madam, aapka confirmation record ho gaya hai. Yaad rahe bank kabhi aapse phone par OTP ya PIN nahi maangta. Have a great day!",
+    genuineTurn2English:
+      "Thank you madam, your confirmation is recorded. Remember banks never ask for OTP or PIN over phone. Have a wonderful day!",
+    scamSummary: "Bank impersonation + coercive KYC freeze threat + OTP credential extortion.",
+  },
+  {
+    id: "police" as const,
+    name: "2. Digital Arrest & Police Extortion",
+    icon: Shield,
+    callerName: "Inspector Vijay Kumar",
+    callerTitle: "Delhi Cyber Crime Police Cell / CBI",
+    callerNumber: "+91 11-2309-8801",
+    avatarIcon: "👮‍♂️",
+    openingHindi:
+      "Namaste! Main Delhi Cyber Crime Police Station se Inspector Vijay Kumar bol raha hoon. Kya meri baat registered Aadhaar card holder se ho rahi hai?",
+    openingEnglish:
+      "Hello! This is Inspector Vijay Kumar from Delhi Cyber Crime Police Station. Am I speaking with the registered Aadhaar card holder?",
+    targetOpeningHindi:
+      "Haan sir, main hi bol rahi hoon. Kya baat hai police station se kyun call aaya hai?",
+    targetOpeningEnglish:
+      "Yes sir, I am speaking. What is the matter, why is police station calling me?",
+    scamTurn1Hindi:
+      "Mumbai airport customs mein aapke Aadhaar par ek illegal parcel pakda gaya hai jisme 14 fake passports aur banned drugs hain! Supreme Court ne aapke khilaf arrest warrant issue kiya hai!",
+    scamTurn1English:
+      "Mumbai airport customs seized an illegal parcel under your Aadhaar containing 14 fake passports and banned drugs! Supreme Court has issued an arrest warrant against you!",
+    scamTurn2Hindi:
+      "Aap abhi se Digital Arrest mein hain! Phone bilkul disconnect mat karna warna police aapke ghar aayegi, turant verification clearance fee transfer karo!",
+    scamTurn2English:
+      "You are placed under Digital Arrest right now! Do not disconnect this call or police will raid your house, transfer court clearance verification fee immediately!",
+    genuineTurn1Hindi:
+      "Ji madam, aapne pichle hafte ek cyber lost mobile complaint darj karwayi thi portal par, hum bas verify kar rahe the ki complaint aapne hi file ki hai ya nahi.",
+    genuineTurn1English:
+      "Madam, you filed a lost mobile report on the citizen portal last week, we are just verifying if the complaint was submitted by you.",
+    genuineTurn2Hindi:
+      "Shukriya madam, aapka verification complete ho gaya hai. Agar koi aapse police ke naam par paise maange toh turant 1930 par report karein.",
+    genuineTurn2English:
+      "Thank you madam, verification is complete. If anyone calls demanding money in police name, report immediately to 1930 helpline.",
+    scamSummary: "Law enforcement impersonation (Digital Arrest) + fake narcotic parcel + extortion demand.",
+  },
+  {
+    id: "electricity" as const,
+    name: "3. Electricity Power Cut Scam",
+    icon: Flame,
+    callerName: "Ramesh Verma",
+    callerTitle: "State Electricity Board / Bijli Vibhag",
+    callerNumber: "+91 98102 33491",
+    avatarIcon: "⚡",
+    openingHindi:
+      "Namaste sir! Main State Electricity Board Bijli Vibhag office se Ramesh Verma baat kar raha hoon meter reading department se.",
+    openingEnglish:
+      "Hello sir! I am Ramesh Verma from State Electricity Board meter department.",
+    targetOpeningHindi:
+      "Haan ji namaste, boliye bijli vibhag se kya kaam hai?",
+    targetOpeningEnglish:
+      "Yes hello, please tell me what is this regarding?",
+    scamTurn1Hindi:
+      "Sir aapka pichle mahine ka bijli bill update nahi hua hai. Aaj raat theek 9:30 baje aapke ghar ki bijli power supply cut kardi jayegi!",
+    scamTurn1English:
+      "Sir, your last month electricity bill is not updated. Tonight sharp at 9:30 PM your power connection will be permanently disconnected!",
+    scamTurn2Hindi:
+      "Bijli bachane ke liye turant is WhatsApp number par 15 rupaye ki payment karke bill update receipt bhejiye, warna line kaat di jayegi!",
+    scamTurn2English:
+      "To prevent power disconnection, transfer Rs 15 immediately on this WhatsApp number to update bill or line will be cut tonight!",
+    genuineTurn1Hindi:
+      "Sir hum bas aapke area mein kal subah 10 baje scheduled transformer maintenance ke bare mein alert dene ke liye phone kiye hain.",
+    genuineTurn1English:
+      "Sir we are calling to inform you about routine transformer maintenance in your area tomorrow at 10 AM.",
+    genuineTurn2Hindi:
+      "Aapka bill already paid hai aur sab theek hai. Kisi ko anjaan number par bill payment na karein. Dhanyawad!",
+    genuineTurn2English:
+      "Your bill is already cleared and updated. Never pay utility bills to unknown phone numbers. Thank you!",
+    scamSummary: "Utility power disconnection urgency + phishing WhatsApp transfer demand.",
+  },
+];
+
+// Reference Sample Calls Library for inspection
 const SAMPLE_CALLS = [
   {
     id: "sample-normal",
@@ -102,12 +204,12 @@ const SAMPLE_CALLS = [
   },
   {
     id: "sample-threat",
-    title: "Threat Call (High Risk)",
+    title: "Threat Call (Digital Arrest)",
     duration: "04:22",
     tag: "Multiple Detections",
     tagType: "danger" as const,
     riskScore: 96,
-    callerNumber: "+91 88001 92841",
+    callerNumber: "+91 11-2309-8801",
     callerName: "Fake Customs / Police Office",
     transcriptLines: [
       { time: "00:00", speaker: "Officer", text: "This is Inspector Vijay Kumar from Delhi Cyber Crime Cell." },
@@ -125,26 +227,26 @@ export function MonitoringPage() {
   const [selectedLang, setSelectedLang] = useState<"en-IN" | "hi-IN">("hi-IN");
   const {
     transcript,
-    interimTranscript,
     isListening,
-    error,
-    lang,
     setLang,
     startListening,
     stopListening,
     resetTranscript,
   } = useSpeechRecognition(selectedLang);
 
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-
   // Tabs inside Player & Sample sections
   const [activePlayerTab, setActivePlayerTab] = useState<"transcript" | "alerts">("transcript");
   const [activeSampleTab, setActiveSampleTab] = useState<"transcript" | "alerts">("transcript");
   const [selectedSample, setSelectedSample] = useState(SAMPLE_CALLS[1]);
 
-  // LIVE INTERACTIVE CALL ENGINE STATES
-  // callStatus: "idle" | "ringing" | "connected" | "cutting" | "ended_safe"
+  // Selected Fraud Scenario (Bank vs Police vs Electricity)
+  const [selectedScenarioId, setSelectedScenarioId] = useState<"bank" | "police" | "electricity">("bank");
+  const activeScenario = useMemo(
+    () => FRAUD_SCENARIOS.find((s) => s.id === selectedScenarioId) || FRAUD_SCENARIOS[0],
+    [selectedScenarioId]
+  );
+
+  // LIVE CALL ENGINE STATES
   const [callStatus, setCallStatus] = useState<"idle" | "ringing" | "connected" | "cutting" | "ended_safe">("idle");
   const [callDuration, setCallDuration] = useState(0);
   const [activeDialogueIndex, setActiveDialogueIndex] = useState(0);
@@ -152,6 +254,7 @@ export function MonitoringPage() {
   const [liveTranscriptFeed, setLiveTranscriptFeed] = useState<
     { time: string; speaker: string; text: string; risk: number }[]
   >([]);
+  const liveTranscriptFeedRef = useRef<{ time: string; speaker: string; text: string; risk: number }[]>([]);
   const [currentRiskScore, setCurrentRiskScore] = useState(6);
   const [currentWarning, setCurrentWarning] = useState<string | null>(null);
 
@@ -159,6 +262,7 @@ export function MonitoringPage() {
   const ringtoneCtxRef = useRef<AudioContext | null>(null);
   const dialogueTimerRef = useRef<any>(null);
   const callDurationTimerRef = useRef<any>(null);
+  const streamWordTimerRef = useRef<any>(null);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   // Load voices for distinct male (scammer) vs female (victim) playback
@@ -284,6 +388,7 @@ export function MonitoringPage() {
       }
       stopRingtone();
       if (dialogueTimerRef.current) clearTimeout(dialogueTimerRef.current);
+      if (streamWordTimerRef.current) clearInterval(streamWordTimerRef.current);
     };
   }, [stopRingtone]);
 
@@ -293,12 +398,14 @@ export function MonitoringPage() {
       window.speechSynthesis.cancel();
     }
     stopRingtone();
+    if (streamWordTimerRef.current) clearInterval(streamWordTimerRef.current);
     setCallStatus("ringing");
     setCallDuration(0);
     setActiveDialogueIndex(0);
     setBranchSelection("undecided");
     setCurrentRiskScore(6);
     setCurrentWarning(null);
+    liveTranscriptFeedRef.current = [];
     setLiveTranscriptFeed([]);
     startRingtone();
   };
@@ -317,54 +424,114 @@ export function MonitoringPage() {
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    if (streamWordTimerRef.current) clearInterval(streamWordTimerRef.current);
     setCallStatus("idle");
   };
 
-  // Speak text with speech synthesis
-  const speakText = (text: string, isMale: boolean, onDone: () => void) => {
+  /**
+   * VOICE-FIRST SPEECH SYNTHESIS ENGINE:
+   * First starts playing the real human voice audio.
+   * Words stream in real time into the transcript in sync with speech!
+   */
+  const speakAndStreamText = (
+    time: string,
+    speaker: string,
+    fullText: string,
+    risk: number,
+    isMale: boolean,
+    onDone: () => void
+  ) => {
     if (typeof window === "undefined" || !window.speechSynthesis) {
-      setTimeout(onDone, 2500);
+      liveTranscriptFeedRef.current = [
+        ...liveTranscriptFeedRef.current,
+        { time, speaker, text: fullText, risk },
+      ];
+      setLiveTranscriptFeed([...liveTranscriptFeedRef.current]);
+      setTimeout(onDone, 2000);
       return;
     }
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(fullText);
     const targetVoice = isMale ? maleVoice : femaleVoice;
     if (targetVoice) utterance.voice = targetVoice;
     utterance.lang = "hi-IN";
     utterance.rate = 1.0;
     utterance.pitch = isMale ? 0.9 : 1.1;
 
-    utterance.onend = () => {
-      onDone();
+    // Create a new blank line in transcript
+    const entryIdx = liveTranscriptFeedRef.current.length;
+    liveTranscriptFeedRef.current = [
+      ...liveTranscriptFeedRef.current,
+      { time, speaker, text: "", risk },
+    ];
+    setLiveTranscriptFeed([...liveTranscriptFeedRef.current]);
+
+    const words = fullText.split(" ");
+    let currentWordIdx = 0;
+
+    // When voice starts, stream words as it speaks
+    utterance.onstart = () => {
+      const intervalMs = Math.max(130, Math.floor((fullText.length * 55) / words.length));
+      streamWordTimerRef.current = setInterval(() => {
+        currentWordIdx++;
+        const currentPartial = words.slice(0, currentWordIdx).join(" ");
+        liveTranscriptFeedRef.current[entryIdx] = {
+          time,
+          speaker,
+          text: currentPartial,
+          risk,
+        };
+        setLiveTranscriptFeed([...liveTranscriptFeedRef.current]);
+
+        if (currentWordIdx >= words.length) {
+          if (streamWordTimerRef.current) clearInterval(streamWordTimerRef.current);
+        }
+      }, intervalMs);
     };
-    utterance.onerror = () => {
+
+    utterance.onend = () => {
+      if (streamWordTimerRef.current) clearInterval(streamWordTimerRef.current);
+      liveTranscriptFeedRef.current[entryIdx] = {
+        time,
+        speaker,
+        text: fullText,
+        risk,
+      };
+      setLiveTranscriptFeed([...liveTranscriptFeedRef.current]);
       onDone();
     };
 
+    utterance.onerror = () => {
+      if (streamWordTimerRef.current) clearInterval(streamWordTimerRef.current);
+      liveTranscriptFeedRef.current[entryIdx] = {
+        time,
+        speaker,
+        text: fullText,
+        risk,
+      };
+      setLiveTranscriptFeed([...liveTranscriptFeedRef.current]);
+      onDone();
+    };
+
+    // Trigger voice!
     window.speechSynthesis.speak(utterance);
   };
 
-  // Master turn-by-turn dialogue orchestrator
+  // Master turn-by-turn dialogue orchestrator using activeScenario
   const playTurn = (turnIndex: number, currentBranch: "undecided" | "suspicious" | "genuine") => {
     // SHARED OPENING (Turns 0 & 1)
     if (turnIndex === 0) {
       const text =
-        selectedLang === "hi-IN"
-          ? "Namaste madam! Main State Bank of India Mumbai Service desk se Rajesh Sharma bol raha hoon. Kya meri baat account holder se ho rahi hai?"
-          : "Hello madam! I am Rajesh Sharma calling from SBI Mumbai Service desk. Am I speaking with the account holder?";
+        selectedLang === "hi-IN" ? activeScenario.openingHindi : activeScenario.openingEnglish;
 
-      setLiveTranscriptFeed((prev) => [
-        ...prev,
-        { time: "00:01", speaker: "Caller (Bank)", text, risk: 8 },
-      ]);
       setCurrentRiskScore(8);
-      setCurrentWarning("Routine bank service desk greeting.");
+      setCurrentWarning("Routine caller greeting.");
 
-      speakText(text, true, () => {
+      speakAndStreamText("00:01", `Caller (${activeScenario.callerName})`, text, 8, true, () => {
         dialogueTimerRef.current = setTimeout(() => {
           playTurn(1, currentBranch);
-        }, 1200);
+        }, 1100);
       });
       return;
     }
@@ -372,16 +539,10 @@ export function MonitoringPage() {
     if (turnIndex === 1) {
       const text =
         selectedLang === "hi-IN"
-          ? "Haan ji namaste sir. Ji boliye, main account holder hi bol rahi hoon. Kahiye kya kaam tha?"
-          : "Yes hello sir. Yes, I am the account holder. Please tell me what this is regarding?";
+          ? activeScenario.targetOpeningHindi
+          : activeScenario.targetOpeningEnglish;
 
-      setLiveTranscriptFeed((prev) => [
-        ...prev,
-        { time: "00:05", speaker: "You (Target)", text, risk: 8 },
-      ]);
-
-      speakText(text, false, () => {
-        // Now prompt user for branch decision if undecided
+      speakAndStreamText("00:06", "You (Target)", text, 8, false, () => {
         setActiveDialogueIndex(2);
       });
       return;
@@ -391,18 +552,12 @@ export function MonitoringPage() {
     if (currentBranch === "suspicious") {
       if (turnIndex === 2) {
         const text =
-          selectedLang === "hi-IN"
-            ? "Ji madam! RBI guidelines ke mutabik agar aaj raat 12 baje se pehle e-KYC nahi hua toh aapka khata aur debit card permanently freeze ho jayega!"
-            : "Yes madam! If e-KYC is not updated before midnight, your account and debit card will be permanently frozen!";
+          selectedLang === "hi-IN" ? activeScenario.scamTurn1Hindi : activeScenario.scamTurn1English;
 
-        setLiveTranscriptFeed((prev) => [
-          ...prev,
-          { time: "00:10", speaker: "Caller (Scammer)", text, risk: 65 },
-        ]);
-        setCurrentRiskScore(65);
-        setCurrentWarning("⚠️ Coercive urgency & KYC account freeze threat detected!");
+        setCurrentRiskScore(68);
+        setCurrentWarning("⚠️ High Urgency & Coercive Pressure detected!");
 
-        speakText(text, true, () => {
+        speakAndStreamText("00:11", `Caller (${activeScenario.callerName})`, text, 68, true, () => {
           dialogueTimerRef.current = setTimeout(() => {
             playTurn(3, "suspicious");
           }, 1000);
@@ -412,34 +567,26 @@ export function MonitoringPage() {
 
       if (turnIndex === 3) {
         const text =
-          selectedLang === "hi-IN"
-            ? "Maine aapke phone par 6-digit OTP bheja hai, turant apna OTP aur PIN batayein warna police complaint hogi aur khata abhi band ho jayega!"
-            : "I sent a 6-digit OTP to your phone, share your OTP and PIN immediately or face police complaint and account closure!";
+          selectedLang === "hi-IN" ? activeScenario.scamTurn2Hindi : activeScenario.scamTurn2English;
 
-        setLiveTranscriptFeed((prev) => [
-          ...prev,
-          { time: "00:16", speaker: "Caller (Scammer)", text, risk: 98 },
-        ]);
         setCurrentRiskScore(98);
-        setCurrentWarning("🚨 CRITICAL SCAM: OTP Extortion & Authority Impersonation!");
+        setCurrentWarning(`🚨 CRITICAL THREAT: ${activeScenario.scamSummary}`);
 
-        speakText(text, true, () => {
+        speakAndStreamText("00:17", `Caller (${activeScenario.callerName})`, text, 98, true, () => {
           // ================= AUTO-CUT CIRCUIT BREAKER =================
           setCallStatus("cutting");
           if (typeof window !== "undefined" && window.speechSynthesis) {
             window.speechSynthesis.cancel();
           }
 
-          // Trigger high-risk siren / alert navigation
           setTimeout(() => {
             navigate({
               to: "/alert",
               search: {
                 score: 98,
-                explanation:
-                  "Scammer impersonating bank representative demanded immediate 6-digit OTP and threatened account closure and police complaint.",
+                explanation: `${activeScenario.callerName} (${activeScenario.callerTitle}) extortion detected. ${activeScenario.scamSummary}`,
                 suggestion:
-                  "Call was automatically cut by TrueShield Circuit Breaker to prevent financial fraud. Do not share OTP.",
+                  "Call was automatically terminated by TrueShield Circuit Breaker to prevent financial extortion and identity theft. Do not pay or share OTP.",
               },
             });
           }, 2400);
@@ -453,17 +600,13 @@ export function MonitoringPage() {
       if (turnIndex === 2) {
         const text =
           selectedLang === "hi-IN"
-            ? "Madam, hum bas aapke registered branch communication address aur email ka routine annual confirmation lena chahte the. Koi confidential info nahi chahiye."
-            : "Madam, we just wanted to confirm your registered communication address and email for routine records. No confidential info needed.";
+            ? activeScenario.genuineTurn1Hindi
+            : activeScenario.genuineTurn1English;
 
-        setLiveTranscriptFeed((prev) => [
-          ...prev,
-          { time: "00:10", speaker: "Caller (Bank)", text, risk: 6 },
-        ]);
         setCurrentRiskScore(6);
-        setCurrentWarning("Routine customer record confirmation. Zero risk keywords.");
+        setCurrentWarning("Routine verification inquiry. No extortion keywords.");
 
-        speakText(text, true, () => {
+        speakAndStreamText("00:11", `Caller (${activeScenario.callerName})`, text, 6, true, () => {
           dialogueTimerRef.current = setTimeout(() => {
             playTurn(3, "genuine");
           }, 1000);
@@ -474,17 +617,13 @@ export function MonitoringPage() {
       if (turnIndex === 3) {
         const text =
           selectedLang === "hi-IN"
-            ? "Bahut badhiya madam, aapka confirmation record ho gaya hai. Yaad rahe bank kabhi aapse phone par OTP ya PIN nahi maangta. Have a great day!"
-            : "Thank you madam, your confirmation is recorded. Remember banks never ask for OTP or PIN over phone. Have a wonderful day!";
+            ? activeScenario.genuineTurn2Hindi
+            : activeScenario.genuineTurn2English;
 
-        setLiveTranscriptFeed((prev) => [
-          ...prev,
-          { time: "00:16", speaker: "Caller (Bank)", text, risk: 4 },
-        ]);
         setCurrentRiskScore(4);
-        setCurrentWarning("Call Verified Genuine. No credential ask.");
+        setCurrentWarning("Call Verified Genuine. No sensitive data requested.");
 
-        speakText(text, true, () => {
+        speakAndStreamText("00:17", `Caller (${activeScenario.callerName})`, text, 4, true, () => {
           setCallStatus("ended_safe");
           setTimeout(() => {
             navigate({
@@ -492,7 +631,7 @@ export function MonitoringPage() {
               search: {
                 score: 4,
                 explanation:
-                  "Routine banking communication address verification call. No suspicious urgency, threats, or OTP requests.",
+                  "Routine communication confirmation call. Verified genuine inquiry without urgency, threats, or payment demands.",
               },
             });
           }, 2400);
@@ -502,7 +641,6 @@ export function MonitoringPage() {
     }
   };
 
-  // Branch Decision Trigger
   const chooseBranch = (branch: "suspicious" | "genuine") => {
     setBranchSelection(branch);
     playTurn(2, branch);
@@ -510,7 +648,47 @@ export function MonitoringPage() {
 
   return (
     <div className="w-full flex flex-col gap-6 py-4 selection:bg-blue-600/30">
-      {/* ================= 1. LIVE CALL STUDIO PLAYER (DARK NAVY LIKE REFERENCE) ================= */}
+      {/* ================= 1. FRAUD SCENARIO PICKER ROW (MULTIPLE SCAMS) ================= */}
+      <section className="w-full rounded-2xl bg-white border border-slate-200/90 p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+            <Shield className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Select Fraud Scenario to Test</h3>
+            <p className="text-xs text-slate-500">
+              Pick between Bank OTP Freeze, Digital Arrest CBI, or Electricity Scam
+            </p>
+          </div>
+        </div>
+
+        {/* 3 Scenario Pills */}
+        <div className="flex flex-wrap items-center gap-2">
+          {FRAUD_SCENARIOS.map((scen) => {
+            const isSelected = selectedScenarioId === scen.id;
+            const Icon = scen.icon;
+            return (
+              <button
+                key={scen.id}
+                onClick={() => {
+                  declineIncomingCall();
+                  setSelectedScenarioId(scen.id);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+                  isSelected
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm scale-105"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{scen.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ================= 2. LIVE CALL STUDIO PLAYER (DARK NAVY LIKE REFERENCE) ================= */}
       <section className="w-full rounded-2xl bg-[#091024] border border-slate-800 text-white p-5 sm:p-6 shadow-2xl overflow-hidden relative">
         {/* Top Header Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
@@ -541,7 +719,7 @@ export function MonitoringPage() {
                 }`}
               />
               {callStatus === "connected"
-                ? "Live & Analyzing"
+                ? "Live Voice Streaming"
                 : callStatus === "ringing"
                 ? "Incoming Ringing..."
                 : callStatus === "cutting"
@@ -617,16 +795,16 @@ export function MonitoringPage() {
               <div className="relative">
                 <div className="w-16 h-16 rounded-full bg-blue-500/30 animate-ping absolute inset-0" />
                 <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-3xl shadow-xl relative z-10">
-                  👨‍💼
+                  {activeScenario.avatarIcon}
                 </div>
               </div>
               <div>
                 <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block">
                   INCOMING CELLULAR CALL...
                 </span>
-                <h3 className="text-xl font-black text-white">Rajesh Sharma</h3>
-                <p className="text-xs text-slate-300">SBI Mumbai Service & Verification Desk</p>
-                <p className="text-xs text-slate-400 font-mono mt-0.5">+91 98765 43210</p>
+                <h3 className="text-xl font-black text-white">{activeScenario.callerName}</h3>
+                <p className="text-xs text-slate-300">{activeScenario.callerTitle}</p>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">{activeScenario.callerNumber}</p>
               </div>
             </div>
 
@@ -662,7 +840,7 @@ export function MonitoringPage() {
                 🚨 AUTO-CUT: CALL CUT BY TRUESHIELD CIRCUIT BREAKER!
               </h3>
               <p className="text-xs text-red-300 mt-0.5">
-                Critical scam pattern verified: OTP demand + authority intimidation. Line terminated in &lt;120ms to protect account.
+                Critical threat detected: {activeScenario.scamSummary} Line terminated in &lt;120ms to protect user.
               </p>
             </div>
           </div>
@@ -679,7 +857,7 @@ export function MonitoringPage() {
                 ✓ CALL SAFELY CONCLUDED (NOT CUT)
               </h3>
               <p className="text-xs text-emerald-300 mt-0.5">
-                Genuine verification call confirmed. Zero urgency or sensitive data requests detected.
+                Genuine inquiry confirmed. Zero urgency or sensitive data requests detected.
               </p>
             </div>
           </div>
@@ -693,18 +871,14 @@ export function MonitoringPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-600/20 border-2 border-blue-500/40 flex items-center justify-center shrink-0 shadow-inner">
-                  <span className="text-2xl">👤</span>
+                  <span className="text-2xl">{activeScenario.avatarIcon}</span>
                 </div>
                 <div className="flex flex-col">
                   <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
-                    {callStatus === "connected" || callStatus === "ringing"
-                      ? "Rajesh Sharma (SBI Bank)"
-                      : selectedSample.callerName}
+                    {activeScenario.callerName}
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-400 font-mono mt-0.5">
-                    {callStatus === "connected" || callStatus === "ringing"
-                      ? "+91 98765 43210"
-                      : selectedSample.callerNumber}
+                    {activeScenario.callerNumber}
                   </p>
                   <span className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
                     <Radio className="h-3 w-3 animate-pulse" />
@@ -763,7 +937,7 @@ export function MonitoringPage() {
               )}
             </div>
 
-            {/* Turn Decision Selector (Appears during call for user to choose branch) */}
+            {/* Turn Decision Selector (Appears after opening speech finishes) */}
             {callStatus === "connected" && activeDialogueIndex === 2 && branchSelection === "undecided" && (
               <div className="p-3.5 rounded-xl bg-blue-950/70 border border-blue-500/50 flex flex-col gap-2.5 shadow-xl">
                 <span className="text-[11px] font-bold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -779,7 +953,7 @@ export function MonitoringPage() {
                       ⚠️ Caller Turns Suspicious (Scam)
                     </span>
                     <span className="text-[10px] text-slate-300 block mt-0.5">
-                      Demands OTP & threats ➔ Auto-Cuts Call!
+                      Demands OTP / Extortion ➔ Auto-Cuts Call!
                     </span>
                   </button>
 
@@ -791,7 +965,7 @@ export function MonitoringPage() {
                       🛡️ Caller Stays Genuine (Safe)
                     </span>
                     <span className="text-[10px] text-slate-300 block mt-0.5">
-                      Routine address verification ➔ Call NOT cut.
+                      Routine verification ➔ Call NOT cut.
                     </span>
                   </button>
                 </div>
@@ -880,7 +1054,7 @@ export function MonitoringPage() {
                       <p className="leading-snug">
                         <strong
                           className={
-                            line.speaker.includes("Scammer")
+                            line.speaker.includes("Scammer") || line.speaker.includes("Vijay") || line.speaker.includes("Ramesh") || line.speaker.includes("Rajesh")
                               ? "text-red-400"
                               : line.speaker.includes("Caller")
                               ? "text-blue-400"
@@ -961,12 +1135,12 @@ export function MonitoringPage() {
               <div className="flex-1 text-xs">
                 <p className="font-bold text-white">
                   {currentRiskScore > 50
-                    ? "Suspicious Keyword Detected — Circuit Breaker Active"
+                    ? "Suspicious Threat Detected — Circuit Breaker Armed"
                     : "Call Status: Normal & Safe"}
                 </p>
                 <p className="text-[11px] text-slate-300 mt-0.5">
                   {currentRiskScore > 50
-                    ? `Keyword: OTP / Freeze / Urgent | Confidence: ${currentRiskScore}% (Call will auto-cut)`
+                    ? `Critical Scam Pattern Identified | Confidence: ${currentRiskScore}% (Call will auto-cut)`
                     : "No high-risk vectors detected. Verified dialogue pattern (Call will not be cut)."}
                 </p>
               </div>
@@ -975,7 +1149,7 @@ export function MonitoringPage() {
         </div>
       </section>
 
-      {/* ================= 2. SAMPLE CALL SUITE (WHITE CARD LAYOUT AS IN REFERENCE) ================= */}
+      {/* ================= 3. SAMPLE CALL SUITE (WHITE CARD LAYOUT AS IN REFERENCE) ================= */}
       <section className="w-full rounded-2xl bg-white text-slate-900 border border-slate-200/90 p-6 shadow-sm">
         <div className="mb-6">
           <h3 className="text-xl font-bold tracking-tight text-slate-900">Sample Call</h3>
@@ -1009,7 +1183,6 @@ export function MonitoringPage() {
                         e.stopPropagation();
                         setSelectedSample(sample);
                         setCurrentRiskScore(sample.riskScore);
-                        // Speak first line using speech synthesis
                         if (typeof window !== "undefined" && window.speechSynthesis) {
                           window.speechSynthesis.cancel();
                           const utt = new SpeechSynthesisUtterance(sample.transcriptLines[0].text);
